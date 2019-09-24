@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libcec-sys = { path = "../libcec-sys" }
+cec-rs = { path = "../cec-rs" }
 
 [[bin]]
 name = "libcec-cli"

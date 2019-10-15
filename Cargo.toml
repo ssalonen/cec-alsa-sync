@@ -3,11 +3,15 @@ name = "cec-alsa-sync"
 version = "0.1.0"
 authors = ["Sami Salonen"]
 edition = "2018"
+license = "GPL-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 cec-rs = { path = "../cec-rs" }
+
+[dependencies.libcec-sys]
+path = "../libcec-sys"
 
 [[bin]]
 name = "libcec-cli"

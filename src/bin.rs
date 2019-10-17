@@ -38,10 +38,9 @@ fn on_command_received(command: CecCommand) {
 }
 
 pub fn main() {
-    // TODO: Pin<callbacks> or have it static?
     let devices = CecDeviceTypeVec::new(CecDeviceType::AudioSystem);
     let config = CecConfiguration::new("Hifiberry", devices);
-    let connection = CecConnection::new(config).expect("CecConnection failed");
+    let mut connection = CecConnection::new(config).expect("CecConnection failed");
     connection
         .open(
             "RPI",
@@ -50,5 +49,8 @@ pub fn main() {
             Some(Box::new(on_command_received)),
         )
         .expect("CecConnection failed");
+
     thread::sleep(time::Duration::from_secs(99_999_999));
+
+    // TODO: handle alsa vol changes
 }

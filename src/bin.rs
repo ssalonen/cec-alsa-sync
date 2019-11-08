@@ -1,6 +1,9 @@
+use env_logger;
+use log::{info, trace, warn};
+
 extern crate cec_rs;
 use cec_rs::{
-    CecCommand, CecConfiguration, CecConnection, CecDeviceType, CecDeviceTypeVec, CecKeypress,
+    CecCommand, CecConnectionCfgBuilder, CecDeviceType, CecDeviceTypeVec, CecKeypress,
     CecUserControlCode,
 };
 use std::process::Command;
@@ -8,9 +11,11 @@ use std::process::Command;
 use std::{thread, time};
 
 fn on_key_press(keypress: CecKeypress) {
-    println!(
+    trace!(
         "onKeyPress: {:?}, keycode: {:?}, duration: {:?}",
-        keypress, keypress.keycode, keypress.duration
+        keypress,
+        keypress.keycode,
+        keypress.duration
     );
     let vol_delta: Option<&str> = match keypress.keycode {
         CecUserControlCode::VolumeUp => Some("1%+"),
@@ -25,32 +30,29 @@ fn on_key_press(keypress: CecKeypress) {
             .output()
             .expect("Failed to call amixer");
     }
-    // TODO: handle vol down, vol up, mute
-    // & report new audio status
 }
 
 fn on_command_received(command: CecCommand) {
-    println!(
+    trace!(
         "onCommandReceived:  opcode: {:?}, initiator: {:?}",
-        command.opcode, command.initiator
+        command.opcode,
+        command.initiator
     );
-    //=> callback kuuntele GIVE_AUDIO_STATUS, transmit REPORT_AUDIO_STATUS
 }
 
 pub fn main() {
-    let devices = CecDeviceTypeVec::new(CecDeviceType::AudioSystem);
-    let config = CecConfiguration::new("Hifiberry", devices);
-    let mut connection = CecConnection::new(config).expect("CecConnection failed");
-    connection
-        .open(
-            "RPI",
-            1000,
-            Some(Box::new(on_key_press)),
-            Some(Box::new(on_command_received)),
-        )
-        .expect("CecConnection failed");
+    env_logger::init();
+
+    let cfg = CecConnectionCfgBuilder::default()
+        .port("RPI".into())
+        .device_name("Hifiberry".into())
+        .key_press_callback(Box::new(on_key_press))
+        .command_received_callback(Box::new(on_command_received))
+        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
+        .build()
+        .unwrap();
+    cfg.open().unwrap();
 
     thread::sleep(time::Duration::from_secs(99_999_999));
-
     // TODO: handle alsa vol changes
 }

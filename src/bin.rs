@@ -51,7 +51,8 @@ pub fn main() {
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
         .unwrap();
-    cfg.open().unwrap();
+    let connection = cfg.open().unwrap();
+    trace!("Active source: {:?}", connection.get_active_source());
 
     thread::sleep(time::Duration::from_secs(99_999_999));
     // TODO: handle alsa vol changes

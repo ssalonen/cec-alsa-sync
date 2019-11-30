@@ -8,12 +8,15 @@ license = "GPL-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cec-rs = { path = "../cec-rs" }
+cec-rs = "1.0.0"
 env_logger = "0.7.1"
 log = "0.4.8"
 
-[dependencies.libcec-sys]
-path = "../libcec-sys"
+# For development, uncomment the following
+#[dependencies.cec-rs]
+#path = "../cec-rs"
+#[dependencies.libcec-sys]
+#path = "../libcec-sys"
 
 [[bin]]
 name = "libcec-cli"

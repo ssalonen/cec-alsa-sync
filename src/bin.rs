@@ -1,5 +1,5 @@
 use env_logger;
-use log::{info, trace, warn};
+use log::trace;
 
 extern crate cec_rs;
 use cec_rs::{

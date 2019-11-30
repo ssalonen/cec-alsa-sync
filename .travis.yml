@@ -1,0 +1,86 @@
+# Based on the "trust" template v0.1.2
+# https://github.com/japaric/trust/tree/v0.1.2
+
+dist: trusty
+language: rust
+services: docker
+sudo: required
+
+# Handle git submodules yourself
+# (from https://github.com/algolia/examples/issues/24)
+# To workaround submodule-of-submodule issues, specifically libcec/platform/support
+git:
+    submodules: false
+
+# Rust builds on stable by default, this can be
+# overridden on a case by case basis down below.
+
+env:
+    global:
+        - CRATE_NAME=libcec-sys
+
+matrix:
+    # These are all the build jobs. Adjust as necessary. Comment out what you
+    # don't need
+    include:
+        # Linux
+        - env: TARGET=aarch64-unknown-linux-gnu
+        - env: TARGET=arm-unknown-linux-gnueabi
+        - env: TARGET=armv7-unknown-linux-gnueabihf
+        - env: TARGET=i686-unknown-linux-gnu
+        #- env: TARGET=i686-unknown-linux-musl
+        - env: TARGET=mips-unknown-linux-gnu
+        - env: TARGET=mips64-unknown-linux-gnuabi64
+        - env: TARGET=mips64el-unknown-linux-gnuabi64
+        - env: TARGET=mipsel-unknown-linux-gnu
+        - env: TARGET=x86_64-unknown-linux-gnu
+        #- env: TARGET=x86_64-unknown-linux-musl
+        # Windows
+        #- env: TARGET=x86_64-pc-windows-gnu
+
+before_install:
+    - set -ex
+    - rustup self update
+
+install:
+    - sh ci/install.sh
+    - source ~/.cargo/env || true
+
+script:
+    - bash ci/script.sh
+
+after_script: set +e
+
+before_deploy:
+    - sh ci/before_deploy.sh
+
+deploy:
+    # update `api_key.secure`
+    # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
+    # - Encrypt it: `travis encrypt 0123456789012345678901234567890123456789
+    # - Paste the output down here
+    api_key:
+        secure: N7yRfA1n/silgKlo8iSXN0ZwTi0rn0eGlZehIN6eVTYGXmRmwJuR11dqOrGaB9PL/xvnrFfVqa36ope2HZvN9obw/3RZqMMHH3qR/kwR+OeXSSC2z9lUmqRIwiTneTt8OEa6+SjHxi7YHjsuoxsOF8snPBerpckmQwx0j2hvOVat0wZzwmPGa9jvo7yyC/si5UL/b56CKS969v2tu8n4/BPFvhUaZ0HCdrjef4IuS3dZc7u87gaA5ZCABeyFBdGifaaGH99sDfxpE8O3OFKv1wni8Z1N63mRc4ayb9i22S2oAF6V9Qof7jLIflfLoQVgnhrarGGhvUpmiGyvfJ6Zj8MN86lJDnoXCJEsRF0tQiilXX2J36eZlnFckF//DkXxP3tFlt2jK4QJTmOrnAwb0NxLj37jDL/mCcBQPKAtA6C9gu3eOExScTWYdXujvJLpp777QiCsYMt6pK3Q7rV7zledhWkj66iIHzpoVtPDLO+3/cOatm0NtWhNCl+g1D3jgnzpEtp5pTd0nT00w8giZXKznMuUpfYmsIM8HHSePv3txTeYHTiOozNz5+F2IXQlJ9RUirArXfq3715PWfyG/T4cgfP3RiqTLZC32lPkn6h+ugUuSmqPc9mKkJS41aEO/gFDyKPkhwfjQh5+Wbw91XTi6sIPXytHrHcUS01JYxE=
+    file_glob: true
+    file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+    on:
+        # Deploy binaries with stable targets
+        condition: $TRAVIS_RUST_VERSION = stable
+        tags: true
+    provider: releases
+    skip_cleanup: true
+
+cache: cargo
+before_cache:
+    # Travis can't cache files that are not readable by "others"
+    - chmod -R a+r $HOME/.cargo
+
+branches:
+    only:
+        # release tags
+        - /^v\d+\.\d+\.\d+.*$/
+        - master
+
+notifications:
+    email:
+        on_success: never

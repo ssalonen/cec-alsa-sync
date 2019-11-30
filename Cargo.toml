@@ -1,9 +1,17 @@
 [package]
 name = "cec-alsa-sync"
-version = "1.0.0"
+version = "1.0.0-alpha.0"
 authors = ["Sami Salonen"]
 edition = "2018"
 license = "GPL-2.0"
+description = "Thin but safe wrapper for libcec"
+documentation = "https://docs.rs/cec-alsa-sync"
+readme = "README.md"
+include = ["/README.md", "/LICENSE", "/Cargo.toml", "/Cargo.lock", "/src/*.rs"]
+keywords = ["libcec", "cec", "hdmi", "alsa"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/ssalonen/cec-alsa-sync"
+repository = "https://github.com/ssalonen/cec-alsa-sync"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,3 +29,7 @@ log = "0.4.8"
 [[bin]]
 name = "libcec-cli"
 path = "src/bin.rs"
+
+[badges]
+travis-ci = { repository = "ssalonen/cec-alsa-sync", branch = "master" }
+maintenance = { status = "passively-maintained" }

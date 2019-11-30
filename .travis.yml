@@ -17,7 +17,7 @@ git:
 
 env:
     global:
-        - CRATE_NAME=libcec-sys
+        - CRATE_NAME=cec-alsa-sync
 
 matrix:
     # These are all the build jobs. Adjust as necessary. Comment out what you

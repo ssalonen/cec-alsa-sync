@@ -17,6 +17,8 @@ main() {
 
     test -f Cargo.lock || cargo generate-lockfile
 
+    cross rustc --bin cec-alsa-sync --target $TARGET --release -- -C lto
+
     cd $stage
     tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz *
     cd $src

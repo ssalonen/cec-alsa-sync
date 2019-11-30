@@ -1,6 +1,7 @@
 # cec-rs
 
 [![Build Status](https://www.travis-ci.org/ssalonen/cec-alsa-sync.svg?branch=master)](https://www.travis-ci.org/ssalonen/cec-alsa-sync)
+[![Crate](https://img.shields.io/crates/v/cec-alsa-sync.svg)](https://crates.io/crates/cec-alsa-sync)
 
 Small command line application to command ALSA volume using CEC.
 

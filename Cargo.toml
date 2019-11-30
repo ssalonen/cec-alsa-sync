@@ -27,7 +27,7 @@ log = "0.4.8"
 #path = "../libcec-sys"
 
 [[bin]]
-name = "libcec-cli"
+name = "cec-alsa-sync"
 path = "src/bin.rs"
 
 [badges]

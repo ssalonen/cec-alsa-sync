@@ -20,7 +20,7 @@ main() {
     cross rustc --bin cec-alsa-sync --target $TARGET --release -- -C lto
 
     cd $stage
-    tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz $src/target/$TARGET/release
+    tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz $src/target/$TARGET/release/$CRATE_NAME
     sha256sum $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz > $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz.sha256
     cd $src
 

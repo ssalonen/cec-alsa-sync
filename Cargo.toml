@@ -1,35 +1,40 @@
-[package]
-name = "cec-alsa-sync"
-version = "1.0.6-alpha.0"
-authors = ["Sami Salonen"]
-edition = "2018"
-license = "GPL-2.0"
-description = "Thin but safe wrapper for libcec"
-documentation = "https://docs.rs/cec-alsa-sync"
-readme = "README.md"
-include = ["/README.md", "/LICENSE", "/Cargo.toml", "/Cargo.lock", "/src/*.rs"]
-keywords = ["libcec", "cec", "hdmi", "alsa"]
-categories = ["command-line-utilities"]
-homepage = "https://github.com/ssalonen/cec-alsa-sync"
-repository = "https://github.com/ssalonen/cec-alsa-sync"
+[[bin]]
+name = 'cec-alsa-sync'
+path = 'src/bin.rs'
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = 'cec-alsa-sync'
+version = '1.0.6-alpha.0'
+authors = ['Sami Salonen']
+edition = '2018'
+license = 'GPL-2.0'
+description = 'Thin but safe wrapper for libcec'
+documentation = 'https://docs.rs/cec-alsa-sync'
+readme = 'README.md'
+include = [
+    '/README.md',
+    '/LICENSE',
+    '/Cargo.toml',
+    '/Cargo.lock',
+    '/src/*.rs',
+]
+keywords = [
+    'libcec',
+    'cec',
+    'hdmi',
+    'alsa',
+]
+categories = ['command-line-utilities']
+homepage = 'https://github.com/ssalonen/cec-alsa-sync'
+repository = 'https://github.com/ssalonen/cec-alsa-sync'
 
 [dependencies]
-cec-rs = "1.1.1"
-env_logger = "0.7.1"
-log = "0.4.8"
+cec-rs = '2.0.1'
+env_logger = '0.7.1'
+log = '0.4.8'
+[badges.travis-ci]
+repository = 'ssalonen/cec-alsa-sync'
+branch = 'master'
 
-# For development, uncomment the following
-#[dependencies.cec-rs]
-#path = "../cec-rs"
-#[dependencies.libcec-sys]
-#path = "../libcec-sys"
-
-[[bin]]
-name = "cec-alsa-sync"
-path = "src/bin.rs"
-
-[badges]
-travis-ci = { repository = "ssalonen/cec-alsa-sync", branch = "master" }
-maintenance = { status = "passively-maintained" }
+[badges.maintenance]
+status = 'passively-maintained'

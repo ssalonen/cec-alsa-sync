@@ -1,4 +1,4 @@
-# cec-rs
+# cec-alsa-sync
 
 [![Build Status](https://www.travis-ci.org/ssalonen/cec-alsa-sync.svg?branch=master)](https://www.travis-ci.org/ssalonen/cec-alsa-sync)
 [![Crate](https://img.shields.io/crates/v/cec-alsa-sync.svg)](https://crates.io/crates/cec-alsa-sync)

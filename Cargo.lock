@@ -39,7 +39,7 @@ checksum = "4fc9a35e1f4290eb9e5fc54ba6cf40671ed2a2514c3eeb2b2a908dda2ea5a1be"
 
 [[package]]
 name = "cec-alsa-sync"
-version = "1.0.13-dev"
+version = "1.0.13"
 dependencies = [
  "cec-rs",
  "env_logger",
@@ -48,9 +48,9 @@ dependencies = [
 
 [[package]]
 name = "cec-rs"
-version = "2.0.3"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "126f92937cf8ac6f1a2c79799afe8920f04ff17809f0ec2e42db56d83cbf860e"
+checksum = "2922663248bf7dff5188b221cf77c16584f95b0e58770e2cc9b99c1739226f87"
 dependencies = [
  "arrayvec",
  "derive_builder",

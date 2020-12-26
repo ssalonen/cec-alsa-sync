@@ -29,9 +29,9 @@ homepage = 'https://github.com/ssalonen/cec-alsa-sync'
 repository = 'https://github.com/ssalonen/cec-alsa-sync'
 
 [dependencies]
-cec-rs = '2.0.1'
+cec-rs = '2.0.3'
 env_logger = '0.7.1'
-log = '0.4.8'
+log = '0.4.11'
 [badges.travis-ci]
 repository = 'ssalonen/cec-alsa-sync'
 branch = 'master'

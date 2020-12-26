@@ -99,7 +99,7 @@ jobs:
 
                   ####### reduce binary size by removing debug symbols #######
                   BINARY_NAME=cec-alsa-sync${{ matrix.job.binary-postfix }}
-                  GCC_PREFIX=$(echo "${{ matrix.job.target }}"|sed s/unknown-//)
+                  GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
                   "$GCC_PREFIX"strip $BINARY_NAME
 
                   ########## create tar.gz ##########

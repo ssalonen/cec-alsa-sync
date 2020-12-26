@@ -89,7 +89,11 @@ jobs:
               shell: bash
               run: |
                   sudo apt update
-                  BINUTILS=$(echo "binutils-${{ matrix.job.target }}"|sed s/unknown-//)
+                  if [[ ${{ matrix.job.target }} == armv7-unknown-linux-gnueabihf ]]; then
+                    BINUTILS=binutils-arm-linux-gnueabihf
+                  else
+                    BINUTILS=$(echo "binutils-${{ matrix.job.target }}"|sed s/unknown-//|tr _ -)
+                  fi            
                   sudo apt-get install -y $BINUTILS
             - name: Packaging final binary
               shell: bash
@@ -98,7 +102,11 @@ jobs:
 
                   ####### reduce binary size by removing debug symbols #######
                   BINARY_NAME=cec-alsa-sync${{ matrix.job.binary-postfix }}
-                  GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
+                  if [[ ${{ matrix.job.target }} == armv7-unknown-linux-gnueabihf ]]; then
+                    GCC_PREFIX=arm-linux-gnueabihf-
+                  else
+                    GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
+                  fi      
                   "$GCC_PREFIX"strip $BINARY_NAME
 
                   ########## create tar.gz ##########

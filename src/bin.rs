@@ -1,4 +1,3 @@
-use env_logger;
 use log::trace;
 
 extern crate cec_rs;

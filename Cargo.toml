@@ -30,7 +30,7 @@ repository = 'https://github.com/ssalonen/cec-alsa-sync'
 
 [dependencies]
 cec-rs = '2.1.0'
-env_logger = '0.7.1'
+env_logger = '0.8.2'
 log = '0.4.11'
 [badges.travis-ci]
 repository = 'ssalonen/cec-alsa-sync'

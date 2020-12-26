@@ -4,7 +4,7 @@ path = 'src/bin.rs'
 
 [package]
 name = 'cec-alsa-sync'
-version = '1.0.15'
+version = '1.0.16-dev'
 authors = ['Sami Salonen']
 edition = '2018'
 license = 'GPL-2.0'

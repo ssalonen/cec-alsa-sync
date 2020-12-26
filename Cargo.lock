@@ -39,7 +39,7 @@ checksum = "4fc9a35e1f4290eb9e5fc54ba6cf40671ed2a2514c3eeb2b2a908dda2ea5a1be"
 
 [[package]]
 name = "cec-alsa-sync"
-version = "1.0.15"
+version = "1.0.16-dev"
 dependencies = [
  "cec-rs",
  "env_logger",

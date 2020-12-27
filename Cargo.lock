@@ -49,9 +49,9 @@ dependencies = [
 
 [[package]]
 name = "cec-rs"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2922663248bf7dff5188b221cf77c16584f95b0e58770e2cc9b99c1739226f87"
+checksum = "89d7b49ca4c2dbbb872852b07cce83269f1ad3bd6eee7be4356e03b9cc1a6cb1"
 dependencies = [
  "arrayvec",
  "derive_builder",

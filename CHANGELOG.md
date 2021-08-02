@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## 1.1.19
+
+- Fix crate description
+
 ## 1.1.18
 
 - CI improvements

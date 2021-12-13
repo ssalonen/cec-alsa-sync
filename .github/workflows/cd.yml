@@ -21,12 +21,6 @@ jobs:
                       use-cross: true
                     - os: ubuntu-latest
                       os-name: linux
-                      target: i686-unknown-linux-gnu
-                      architecture: i686
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
                       target: arm-unknown-linux-gnueabi
                       architecture: arm
                       binary-postfix: ""
@@ -35,36 +29,6 @@ jobs:
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
-                      target: mips-unknown-linux-gnu
-                      architecture: mips
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
-                      target: mips64-unknown-linux-gnuabi64
-                      architecture: mips64
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
-                      target: mips64el-unknown-linux-gnuabi64
-                      architecture: mips64el
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
-                      target: mipsel-unknown-linux-gnu
-                      architecture: mipsel
-                      binary-postfix: ""
-                      use-cross: true
-                    - os: ubuntu-latest
-                      os-name: linux
-                      target: x86_64-unknown-linux-gnu
-                      architecture: x86_64
                       binary-postfix: ""
                       use-cross: true
 
@@ -93,7 +57,7 @@ jobs:
                     BINUTILS=binutils-arm-linux-gnueabihf
                   else
                     BINUTILS=$(echo "binutils-${{ matrix.job.target }}"|sed s/unknown-//|tr _ -)
-                  fi            
+                  fi
                   sudo apt-get install -y $BINUTILS
             - name: Packaging final binary
               shell: bash
@@ -106,7 +70,7 @@ jobs:
                     GCC_PREFIX=arm-linux-gnueabihf-
                   else
                     GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
-                  fi      
+                  fi
                   "$GCC_PREFIX"strip $BINARY_NAME
 
                   ########## create tar.gz ##########

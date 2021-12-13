@@ -5,7 +5,7 @@
 [![CI](https://github.com/ssalonen/cec-alsa-sync/workflows/Continuous%20Integration/badge.svg)](https://github.com/ssalonen/cec-alsa-sync/actions)
 [![Coverage Status](https://coveralls.io/repos/github/ssalonen/cec-alsa-sync/badge.svg?branch=master)](https://coveralls.io/github/ssalonen/cec-alsa-sync?branch=master)
 
-Small command line application to command ALSA volume using CEC.
+Small command line application to command ALSA volume using CEC via Rasberry Pi HDMI port.
 
 This can be used to control e.g. Hifiberry DSP volume using TV remote.
 

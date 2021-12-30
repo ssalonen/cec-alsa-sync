@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- N/A
+## 1.2.0
+
+- Update `cec-rs` to 2.0.0
+- log messages from libcec
 
 ## 1.1.19
 

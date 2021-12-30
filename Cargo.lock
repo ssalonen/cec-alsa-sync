@@ -42,7 +42,7 @@ checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
 
 [[package]]
 name = "cec-alsa-sync"
-version = "1.0.20-alpha.0"
+version = "1.2.0-alpha.0"
 dependencies = [
  "cec-rs",
  "env_logger",
@@ -51,9 +51,9 @@ dependencies = [
 
 [[package]]
 name = "cec-rs"
-version = "2.2.1"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dabd7933c54ecc6891c37cb806516e973b93f7cb99f9b8b26c970c7c3a0611f2"
+checksum = "5350cfaead5e2cc8b93fc3a284789d5009b67777d16292e8222afcd43fb8b3fd"
 dependencies = [
  "arrayvec",
  "derive_builder",
@@ -223,12 +223,14 @@ checksum = "8e167738f1866a7ec625567bae89ca0d44477232a4f7c52b1c7f2adc2c98804f"
 
 [[package]]
 name = "libcec-sys"
-version = "1.1.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceec2dbe52f439a500814859e896d15517eb5a5cf35af82b3c53409ebb6ce9de"
+checksum = "321a6b03dae7cbcefe7ca55c9742862eaccf2e65e374cbceb3384623cae0a308"
 dependencies = [
+ "cc",
  "cmake",
  "copy_dir",
+ "pkg-config",
 ]
 
 [[package]]
@@ -254,6 +256,12 @@ checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
 dependencies = [
  "autocfg",
 ]
+
+[[package]]
+name = "pkg-config"
+version = "0.3.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
 
 [[package]]
 name = "proc-macro-error"

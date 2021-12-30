@@ -223,9 +223,9 @@ checksum = "8e167738f1866a7ec625567bae89ca0d44477232a4f7c52b1c7f2adc2c98804f"
 
 [[package]]
 name = "libcec-sys"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "321a6b03dae7cbcefe7ca55c9742862eaccf2e65e374cbceb3384623cae0a308"
+checksum = "cad69a0192ec117322878ea5834d5b1e51b354afd2ab502f31cf157139d12eb1"
 dependencies = [
  "cc",
  "cmake",

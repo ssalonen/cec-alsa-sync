@@ -6,7 +6,6 @@ use cec_rs::{
     CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
     CecDeviceTypeVec, CecKeypress, CecLogMessage, CecUserControlCode,
 };
-use libcec_sys::{CEC_USER_CONTROL_CODE_VOLUME_DOWN, CEC_USER_CONTROL_CODE_VOLUME_UP};
 use std::convert::TryFrom;
 use std::process::Command;
 use std::sync::mpsc::{channel, Sender};
@@ -138,26 +137,31 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                 })
                 .expect("internal channel send failed");
         }
-        cec_rs::CecOpcode::UserControlPressed
-            if command.parameters.0[0] as u32 == CEC_USER_CONTROL_CODE_VOLUME_DOWN
-                || command.parameters.0[0] as u32 == CEC_USER_CONTROL_CODE_VOLUME_UP =>
-        {
-            // TODO: Throttle these ones with 500ms to be compliant
-            sender
-                .send(CecCommand {
-                    ack: true,
-                    destination: command.initiator,
-                    eom: true,
-                    initiator: command.destination,
-                    transmit_timeout: Duration::from_millis(500),
-                    parameters: audio_status_data_packet(
-                        false,
-                        VolumePercent::try_from(50u8).unwrap(),
-                    ), // FIXME:real volume
-                    opcode_set: true,
-                    opcode: cec_rs::CecOpcode::ReportAudioStatus,
+        cec_rs::CecOpcode::UserControlPressed => {
+            let user_control_code = CecUserControlCode::try_from(command.parameters.0[0] as u32);
+            if user_control_code
+                .map(|cc| {
+                    cc == CecUserControlCode::VolumeDown || cc == CecUserControlCode::VolumeUp
                 })
-                .expect("internal channel send failed");
+                .unwrap_or(false)
+            {
+                // TODO: Throttle these ones with 500ms to be compliant
+                sender
+                    .send(CecCommand {
+                        ack: true,
+                        destination: command.initiator,
+                        eom: true,
+                        initiator: command.destination,
+                        transmit_timeout: Duration::from_millis(500),
+                        parameters: audio_status_data_packet(
+                            false,
+                            VolumePercent::try_from(50u8).unwrap(),
+                        ), // FIXME:real volume
+                        opcode_set: true,
+                        opcode: cec_rs::CecOpcode::ReportAudioStatus,
+                    })
+                    .expect("internal channel send failed");
+            }
         }
         _ => {}
     };

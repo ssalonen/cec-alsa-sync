@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 3.0.1
+
+Fixes for new Samsung TV update, otherwise TV reverted to TV speaker automatically
+
+- Handle `SystemAudioModeRequest`, responding now with `SetSystemAudioMode`
+- Handle `GiveSystemAudioModeStatus`, respond with `SystemAudioModeStatus`
+- Handle `GiveAudioStatus`, respond with `ReportAudioStatus` (although with dummy volume)
+
 ## 3.0.0
 
 - cec-rs updated to v6. CI/CD compiled now against cec6

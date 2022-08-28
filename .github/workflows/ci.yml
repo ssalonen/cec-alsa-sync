@@ -15,13 +15,13 @@ jobs:
             matrix:
                 rust: [stable]
                 job:
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       target: aarch64-unknown-linux-gnu
                       use-cross: true
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       target: arm-unknown-linux-gnueabi
                       use-cross: true
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       target: armv7-unknown-linux-gnueabihf
                       use-cross: true
         steps:
@@ -34,6 +34,8 @@ jobs:
                   profile: minimal
                   target: ${{ matrix.job.target }}
                   override: true
+            - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - name: Cargo test
               uses: actions-rs/cargo@v1
               with:
@@ -44,7 +46,7 @@ jobs:
 
     rustfmt:
         name: Rustfmt
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
@@ -63,7 +65,7 @@ jobs:
 
     clippy:
         name: Clippy
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
@@ -84,14 +86,14 @@ jobs:
 
     coverage:
         name: Code coverage
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
             - name: Update apt
               run: sudo apt-get update
             - name: Install dependencies for build and coverage
-              run: sudo apt-get install libudev-dev libcec4 libcec-dev pkg-config libp8-platform-dev
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - name: Install stable toolchain
               uses: actions-rs/toolchain@v1
               with:

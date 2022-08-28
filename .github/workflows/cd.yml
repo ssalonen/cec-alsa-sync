@@ -13,19 +13,19 @@ jobs:
             matrix:
                 rust: [stable]
                 job:
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: aarch64
                       binary-postfix: ""
                       use-cross: true
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       os-name: linux
                       target: arm-unknown-linux-gnueabi
                       architecture: arm
                       binary-postfix: ""
                       use-cross: true
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
@@ -41,6 +41,8 @@ jobs:
                   override: true
             - name: Checkout repository
               uses: actions/checkout@v2
+            - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - name: Cargo build
               uses: actions-rs/cargo@v1
               with:
@@ -94,11 +96,11 @@ jobs:
 
     publish-cargo:
         name: Publishing to Cargo
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@master
-            - name: Install libudev for cargo publish. Needed by libcec build
-              run: sudo apt-get install libudev-dev
+            - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - uses: actions-rs/toolchain@v1
               with:
                   toolchain: stable

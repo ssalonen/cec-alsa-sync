@@ -21,7 +21,7 @@ impl TryFrom<u8> for VolumePercent {
         if volume_percent > 100 {
             Err(())
         } else {
-            Ok(VolumePercent { 0: volume_percent })
+            Ok(VolumePercent(volume_percent))
         }
     }
 }
@@ -49,13 +49,13 @@ fn audio_status_data_packet(mute: bool, volume: VolumePercent) -> CecDatapacket 
         volume_low_7bits
     });
 
-    CecDatapacket { 0: data }
+    CecDatapacket(data)
 }
 
 fn bool_data_packet(val: bool) -> CecDatapacket {
     let mut data = ArrayVec::<u8, 64>::new();
     data.push(if val { 1 } else { 0 });
-    CecDatapacket { 0: data }
+    CecDatapacket(data)
 }
 
 fn on_key_press(keypress: CecKeypress) {

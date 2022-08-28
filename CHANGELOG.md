@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 3.0.0
+
+- cec-rs updated to v6. CI/CD compiled now against cec6
+
 ## 2.0.0
 
 - libcec-sys update. Now support libcec version 4, 5 and 6.

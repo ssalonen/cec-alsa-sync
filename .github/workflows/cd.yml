@@ -41,6 +41,8 @@ jobs:
                   override: true
             - name: Checkout repository
               uses: actions/checkout@v2
+            - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - name: Cargo build
               uses: actions-rs/cargo@v1
               with:
@@ -97,8 +99,8 @@ jobs:
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@master
-            - name: Install libudev for cargo publish. Needed by libcec build
-              run: sudo apt-get install libudev-dev
+            - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - uses: actions-rs/toolchain@v1
               with:
                   toolchain: stable

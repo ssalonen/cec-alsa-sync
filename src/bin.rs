@@ -200,7 +200,7 @@ pub fn main() {
 
     loop {
         if let Ok(command) = receiver.recv() {
-            match connection.transmit(&command) {
+            match connection.transmit(command.clone()) {
                 Ok(_) => debug!(
                     "Sent command {:?} with parameters {:?}",
                     command.opcode, command.parameters

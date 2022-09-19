@@ -1,9 +1,9 @@
 
 [target.aarch64-unknown-linux-gnu]
-image="ssalonen/aarch64-unknown-linux-gnu-0.2.1"
+image="docker.io/ssalonen/aarch64-unknown-linux-gnu-0.2.1"
 
 [target.arm-unknown-linux-gnueabi]
-image="ssalonen/arm-unknown-linux-gnueabi-0.2.1"
+image="docker.io/ssalonen/arm-unknown-linux-gnueabi-0.2.1"
 
 [target.armv7-unknown-linux-gnueabihf]
-image="ssalonen/armv7-unknown-linux-gnueabihf-0.2.1"
+image="docker.io/ssalonen/armv7-unknown-linux-gnueabihf-0.2.1"

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- `Cross.toml` using fully qualified docker names
+- `README.md` up-to-date `cargo release` instructions
+
 ## 3.0.2
 
 - Classify as `PlaybackDevice`, not `AudioSystem`.

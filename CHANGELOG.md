@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 3.0.2
+
+- Classify as `PlaybackDevice`, not `AudioSystem`.
+
 ## 3.0.1
 
 Fixes for new Samsung TV update, otherwise TV reverted to TV speaker automatically

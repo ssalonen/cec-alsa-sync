@@ -40,4 +40,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Releasing
 
-```cargo release --no-publish``` for a dry run. Then execute with ```cargo release --no-publish --execute``` and let the github CD pipeline do the rest.
+```cargo release --no-publish --dev-version patch``` for a dry run. Then execute with ```cargo release --no-publish --dev-version patch --execute``` and let the github CD pipeline do the rest.

@@ -191,7 +191,7 @@ pub fn main() {
             on_command_received(sender.clone(), command)
         }))
         .log_message_callback(Box::new(on_log_message))
-        .device_types(CecDeviceTypeVec::new(CecDeviceType::PlaybackDevice))
+        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
         .unwrap();
     let connection: CecConnection = cfg.open().unwrap();

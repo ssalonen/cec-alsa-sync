@@ -73,6 +73,10 @@ fn on_key_press(keypress: CecKeypress) {
         keypress.keycode,
         keypress.duration
     );
+    if(keypress.duration.is_zero()){
+        // Filter duplicate events
+        return;
+    }
     let app_config = CONFIG.get().expect("Config not available");
     let command: Option<Command> = match keypress.keycode {
         CecUserControlCode::VolumeUp => Some(app_config.vol_up_command.new_command()),

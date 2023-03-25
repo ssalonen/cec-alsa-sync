@@ -6,12 +6,20 @@ use cec_rs::{
     CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
     CecDeviceTypeVec, CecKeypress, CecLogMessage, CecUserControlCode,
 };
+
 use std::convert::TryFrom;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::{channel, Sender};
 
 use std::time::Duration;
-use std::u8;
+
+mod config;
+use config::CONFIG;
+
+use crate::config::{AppConfig, CreatesCommand};
 
 struct VolumePercent(u8);
 
@@ -65,18 +73,15 @@ fn on_key_press(keypress: CecKeypress) {
         keypress.keycode,
         keypress.duration
     );
-    let vol_delta: Option<&str> = match keypress.keycode {
-        CecUserControlCode::VolumeUp => Some("1%+"),
-        CecUserControlCode::VolumeDown => Some("1%-"),
+    let app_config = CONFIG.get().expect("Config not available");
+    let command: Option<Command> = match keypress.keycode {
+        CecUserControlCode::VolumeUp => Some(app_config.vol_up_command.new_command()),
+        CecUserControlCode::VolumeDown => Some(app_config.vol_down_command.new_command()),
+        CecUserControlCode::Mute => app_config.mute_command.as_ref().map(|c| c.new_command()),
         _ => None,
     };
-    if let Some(vol_delta) = vol_delta {
-        Command::new("amixer")
-            .arg("set")
-            .arg("DSPVolume")
-            .arg(vol_delta)
-            .output()
-            .expect("Failed to call amixer");
+    if let Some(mut command) = command {
+        command.output().expect("Failed to call amixer");
     }
 }
 
@@ -179,13 +184,16 @@ fn on_log_message(log_message: CecLogMessage) {
     }
 }
 
-pub fn main() {
+pub fn main() -> Result<(), &'static str> {
     env_logger::init();
+    read_config()?;
+    
     let (sender, receiver) = channel();
+    let app_config = CONFIG.get().expect("Config not available");
 
-    let cfg = CecConnectionCfgBuilder::default()
-        .port("RPI".into())
-        .device_name("Hifiberry".into())
+    let connection_config = CecConnectionCfgBuilder::default()
+        .port(app_config.hdmi_port.clone())
+        .device_name(app_config.device_name.clone())
         .key_press_callback(Box::new(on_key_press))
         .command_received_callback(Box::new(move |command| {
             on_command_received(sender.clone(), command)
@@ -194,7 +202,7 @@ pub fn main() {
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
         .unwrap();
-    let connection: CecConnection = cfg.open().unwrap();
+    let connection: CecConnection = connection_config.open().unwrap();
 
     trace!("Active source: {:?}", connection.get_active_source());
 
@@ -212,4 +220,25 @@ pub fn main() {
             break;
         }
     }
+    Ok(())
+}
+
+fn read_config() -> Result<(), &'static str>{
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 2 {
+        // Load default config
+        let c: AppConfig = toml::from_str("").expect("error while reading config");
+        CONFIG.set(c).expect("failed to set config");
+        return Ok(());
+    }
+    let config_path = &args[1];
+    let config_file_path = Path::new(config_path);
+    let mut config_file = File::open(config_file_path).expect("Failed to open config");
+    let mut contents = String::new();
+    config_file
+        .read_to_string(&mut contents)
+        .expect("Failed to read config");
+    let c: AppConfig = toml::from_str(&contents).expect("error while reading config");
+    CONFIG.set(c).expect("failed to set config");
+    Ok(())
 }

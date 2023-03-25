@@ -187,7 +187,7 @@ fn on_log_message(log_message: CecLogMessage) {
 pub fn main() -> Result<(), &'static str> {
     env_logger::init();
     read_config()?;
-    
+
     let (sender, receiver) = channel();
     let app_config = CONFIG.get().expect("Config not available");
 
@@ -223,7 +223,7 @@ pub fn main() -> Result<(), &'static str> {
     Ok(())
 }
 
-fn read_config() -> Result<(), &'static str>{
+fn read_config() -> Result<(), &'static str> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
         // Load default config

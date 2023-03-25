@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 3.1.0
+
+
+- CI: utilize Cross `pre-build` instead of pre-built docker images
+- Support running custom commands on vol up, vol down, or mute button press.
 
 ## 3.0.3
 

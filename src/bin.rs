@@ -73,7 +73,7 @@ fn on_key_press(keypress: CecKeypress) {
         keypress.keycode,
         keypress.duration
     );
-    if(keypress.duration.is_zero()){
+    if keypress.duration.is_zero() {
         // Filter duplicate events
         return;
     }
@@ -85,6 +85,7 @@ fn on_key_press(keypress: CecKeypress) {
         _ => None,
     };
     if let Some(mut command) = command {
+        debug!("Executing command {:?} {:?}", command.get_program(), command.get_args());
         command.output().expect("Failed to call amixer");
     }
 }

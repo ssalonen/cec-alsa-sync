@@ -1,9 +1,5 @@
-
-[target.aarch64-unknown-linux-gnu]
-image="docker.io/ssalonen/aarch64-unknown-linux-gnu-0.2.1"
-
-[target.arm-unknown-linux-gnueabi]
-image="docker.io/ssalonen/arm-unknown-linux-gnueabi-0.2.1"
-
-[target.armv7-unknown-linux-gnueabihf]
-image="docker.io/ssalonen/armv7-unknown-linux-gnueabihf-0.2.1"
+[build]
+default-target = "armv7-unknown-linux-gnueabihf"
+pre-build = [
+    "apt-get remove --allow-remove-essential -y libudev1 udev libudev-dev || :"
+]

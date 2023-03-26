@@ -73,19 +73,26 @@ fn on_key_press(keypress: CecKeypress) {
         keypress.keycode,
         keypress.duration
     );
-    if keypress.duration.is_zero() {
-        // Filter duplicate events
-        return;
-    }
     let app_config = CONFIG.get().expect("Config not available");
     let command: Option<Command> = match keypress.keycode {
         CecUserControlCode::VolumeUp => Some(app_config.vol_up_command.new_command()),
         CecUserControlCode::VolumeDown => Some(app_config.vol_down_command.new_command()),
-        CecUserControlCode::Mute => app_config.mute_command.as_ref().map(|c| c.new_command()),
+        CecUserControlCode::Mute => {
+            if keypress.duration.is_zero() {
+                // Filter duplicate events
+                None
+            } else {
+                app_config.mute_command.as_ref().map(|c| c.new_command())
+            }
+        }
         _ => None,
     };
     if let Some(mut command) = command {
-        debug!("Executing command {:?} {:?}", command.get_program(), command.get_args());
+        debug!(
+            "Executing command {:?} {:?}",
+            command.get_program(),
+            command.get_args()
+        );
         command.output().expect("Failed to call amixer");
     }
 }

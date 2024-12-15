@@ -32,6 +32,7 @@ jobs:
                   target: ${{ matrix.job.target }}
                   override: true
             - name: Install dependencies to avoid vendored libcec build in libcec-sys
+              if: ${{ matrix.job.use-cross }}
               run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
             - name: Cargo test
               uses: actions-rs/cargo@v1

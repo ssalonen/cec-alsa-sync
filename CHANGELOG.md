@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 4.0.0
 
-- Bump to latest cec-rs, version 11.0.1
+- Bump to latest cec-rs, version 11.0.2
 
 ## 3.1.1
 

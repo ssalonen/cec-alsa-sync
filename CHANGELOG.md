@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 4.0.1
+
+- CD pipeline fix
+
 ## 4.0.0
 
 - Bump to latest cec-rs, version 11.0.2

@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{ffi::CString, process::Command};
 
 use once_cell::sync::OnceCell;
 use serde::{de, Deserialize, Deserializer};
@@ -19,7 +19,7 @@ impl From<Vec<&str>> for CommandTemplate {
 impl CreatesCommand for CommandTemplate {
     fn new_command(&self) -> Command {
         let args = self.0.clone();
-        let mut cmd = Command::new(args.get(0).expect("Missing program"));
+        let mut cmd = Command::new(args.first().expect("Missing program"));
         cmd.args(&args[1..]);
         cmd
     }
@@ -28,7 +28,7 @@ impl CreatesCommand for CommandTemplate {
 #[derive(Deserialize, Debug)]
 pub struct AppConfig {
     #[serde(default = "default_hdmi_port")]
-    pub hdmi_port: String,
+    pub hdmi_port: CString,
     #[serde(default = "default_device_name")]
     pub device_name: String,
     #[serde(
@@ -83,8 +83,8 @@ fn default_volume_down() -> CommandTemplate {
 fn default_device_name() -> String {
     "Hifiberry".to_owned()
 }
-fn default_hdmi_port() -> String {
-    "RPI".to_owned()
+fn default_hdmi_port() -> CString {
+    CString::new("RPI").unwrap()
 }
 
 pub static CONFIG: OnceCell<AppConfig> = OnceCell::new();

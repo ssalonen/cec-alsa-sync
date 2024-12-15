@@ -155,7 +155,7 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                 .expect("internal channel send failed");
         }
         cec_rs::CecOpcode::UserControlPressed => {
-            let user_control_code = CecUserControlCode::try_from(command.parameters.0[0] as u32);
+            let user_control_code = CecUserControlCode::from_repr(command.parameters.0[0] as u32);
             if user_control_code
                 .map(|cc| {
                     cc == CecUserControlCode::VolumeDown || cc == CecUserControlCode::VolumeUp
@@ -213,8 +213,10 @@ pub fn main() -> Result<(), &'static str> {
         .log_message_callback(Box::new(on_log_message))
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
-        .unwrap();
-    let connection: CecConnection = connection_config.open().unwrap();
+        .expect("Could not construct config");
+    let connection: CecConnection = connection_config
+        .open()
+        .unwrap_or_else(|_| panic!("Adapter open failed, port {:?}", app_config.hdmi_port.clone()));
 
     trace!("Active source: {:?}", connection.get_active_source());
 

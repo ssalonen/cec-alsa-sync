@@ -214,9 +214,12 @@ pub fn main() -> Result<(), &'static str> {
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
         .expect("Could not construct config");
-    let connection: CecConnection = connection_config
-        .open()
-        .unwrap_or_else(|_| panic!("Adapter open failed, port {:?}", app_config.hdmi_port.clone()));
+    let connection: CecConnection = connection_config.open().unwrap_or_else(|_| {
+        panic!(
+            "Adapter open failed, port {:?}",
+            app_config.hdmi_port.clone()
+        )
+    });
 
     trace!("Active source: {:?}", connection.get_active_source());
 

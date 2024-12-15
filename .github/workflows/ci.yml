@@ -39,7 +39,7 @@ jobs:
                   command: test
                   use-cross: ${{ matrix.job.use-cross }}
                   toolchain: ${{ matrix.rust }}
-                  args: --target ${{ matrix.job.target }}
+                  args: --target ${{ matrix.job.target }} -vv
               env:
                   LIBCEC_VENDORED: "1"
 

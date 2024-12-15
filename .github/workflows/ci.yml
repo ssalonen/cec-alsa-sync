@@ -1,10 +1,10 @@
 on:
     push:
         branches:
-        - master
+            - master
     pull_request:
         branches:
-        - master
+            - master
 name: Continuous Integration
 
 jobs:
@@ -40,6 +40,8 @@ jobs:
                   use-cross: ${{ matrix.job.use-cross }}
                   toolchain: ${{ matrix.rust }}
                   args: --target ${{ matrix.job.target }}
+              env:
+                  LIBCEC_VENDORED: "1"
 
     rustfmt:
         name: Rustfmt

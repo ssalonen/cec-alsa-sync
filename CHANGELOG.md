@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 4.0.4
+
+- cd pipeline for aarch64-unknown-linux-gnu
+
 ## 4.0.3
 
 - build also for aarch64-unknown-linux-gnu

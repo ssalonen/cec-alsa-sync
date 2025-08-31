@@ -18,45 +18,47 @@ jobs:
                       os-name: linux
                       target: arm-unknown-linux-gnueabi
                       architecture: arm
+                      deb_arch: armel
                       binary-postfix: ""
-                      use-cross: true
                       LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
+                      deb_arch: armhf
                       binary-postfix: ""
-                      use-cross: true
                       LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
+                      deb_arch: arm64
                       binary-postfix: ""
-                      use-cross: true
                       LIBCEC_VENDORED: "1"
-                    # static builds (currently failing with libudev issues)
-                    # - os: ubuntu-22.04
-                    #   os-name: linux
-                    #   target: arm-unknown-linux-gnueabi
-                    #   architecture: arm
-                    #   binary-postfix: "-static"
-                    #   use-cross: true
-                    #   LIBCEC_STATIC: "1"
-                    # - os: ubuntu-22.04
-                    #   os-name: linux
-                    #   target: armv7-unknown-linux-gnueabihf
-                    #   architecture: armv7
-                    #   binary-postfix: "-static"
-                    #   use-cross: true
-                    #   LIBCEC_STATIC: "1"
-                    # - os: ubuntu-22.04
-                    #   os-name: linux
-                    #   target: aarch64-unknown-linux-gnu
-                    #   architecture: arm64
-                    #   binary-postfix: "-static"
-                    #   use-cross: true
-                    #   LIBCEC_STATIC: "1"
+                    # static builds
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: arm-unknown-linux-gnueabi
+                      architecture: arm
+                      deb_arch: armel
+                      binary-postfix: "-static"
+                      LIBCEC_STATIC: "1"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: armv7-unknown-linux-gnueabihf
+                      architecture: armv7
+                      deb_arch: armhf
+                      binary-postfix: "-static"
+                      LIBCEC_STATIC: "1"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: aarch64-unknown-linux-gnu
+                      architecture: arm64
+                      deb_arch: arm64
+                      binary-postfix: "-static"
+                      LIBCEC_STATIC: "1"
+        container:
+          image: ghcr.io/cross-rs/${{ matrix.job.target }}:main
 
         steps:
             - name: Installing Rust toolchain
@@ -72,12 +74,18 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: build
-                  use-cross: ${{ matrix.job.use-cross }}
                   toolchain: ${{ matrix.rust }}
                   args: --release --target ${{ matrix.job.target }}
               env:
                   LIBCEC_STATIC: ${{ matrix.job.LIBCEC_STATIC || '0' }}
                   LIBCEC_VENDORED: ${{ matrix.job.LIBCEC_VENDORED || '0' }}
+
+            - name: Install libudev-dev for device detection support
+              run: |
+                dpkg --add-architecture ${{ matrix.job.deb_arch }}
+                apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
+                || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
+
 
             - name: install strip command
               shell: bash

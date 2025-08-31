@@ -112,7 +112,9 @@ jobs:
                     GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
                   fi
                   "$GCC_PREFIX"strip $BINARY_NAME
-                  mv $BINARY_NAME $BINARY_NAME${{ matrix.job.binary-postfix }}
+                  if [[ "${{ matrix.job.binary-postfix }}" != "" ]]; then                    
+                    mv $BINARY_NAME $BINARY_NAME${{ matrix.job.binary-postfix }}
+                  fi
 
                   ########## create tar.gz ##########
                   REF_NAME=${GITHUB_REF#refs/*/}

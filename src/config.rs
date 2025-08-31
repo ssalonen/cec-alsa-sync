@@ -43,6 +43,13 @@ pub struct AppConfig {
     pub vol_down_command: CommandTemplate,
     #[serde(default, deserialize_with = "command_template_option_from_args")]
     pub mute_command: Option<CommandTemplate>,
+    #[serde(default, deserialize_with = "command_template_option_from_args")]
+    pub tv_turned_on_command: Option<CommandTemplate>,
+    #[serde(default, deserialize_with = "command_template_option_from_args")]
+    pub tv_turned_off_command: Option<CommandTemplate>,
+
+    #[serde(default = "default_power_poll_interval_ms")]
+    pub power_poll_interval_ms: u64,
 }
 
 fn command_template_from_args<'de, D>(deserializer: D) -> Result<CommandTemplate, D::Error>
@@ -85,6 +92,10 @@ fn default_device_name() -> String {
 }
 fn default_hdmi_port() -> CString {
     CString::new("RPI").unwrap()
+}
+
+const fn default_power_poll_interval_ms() -> u64 {
+    500
 }
 
 pub static CONFIG: OnceCell<AppConfig> = OnceCell::new();

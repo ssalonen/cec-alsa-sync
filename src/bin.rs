@@ -4,7 +4,7 @@ extern crate cec_rs;
 use arrayvec::ArrayVec;
 use cec_rs::{
     CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
-    CecDeviceTypeVec, CecKeypress, CecLogMessage, CecUserControlCode,
+    CecDeviceTypeVec, CecKeypress, CecLogMessage, CecPowerStatus, CecUserControlCode,
 };
 
 use std::convert::TryFrom;
@@ -14,6 +14,7 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::{channel, Sender};
 
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 mod config;
@@ -180,8 +181,64 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                     .expect("internal channel send failed");
             }
         }
+        cec_rs::CecOpcode::ReportPowerStatus => {
+            if !command.parameters.0.is_empty() {
+                let power_status = CecPowerStatus::from_repr(command.parameters.0[0] as _);
+                if let Some(power_status) = power_status {
+                    if matches!(command.initiator, cec_rs::CecLogicalAddress::Tv) {
+                        on_tv_power_status_changed(power_status);
+                    }
+                }
+            }
+        }
         _ => {}
     };
+}
+
+fn on_tv_power_status_changed(power_status: CecPowerStatus) {
+    info!("TV power status changed: {:?}", power_status);
+
+    let app_config = CONFIG.get().expect("Config not available");
+
+    match power_status {
+        CecPowerStatus::On => {
+            debug!("TV is ON");
+        }
+        CecPowerStatus::Standby => {
+            debug!("TV is standby");
+        }
+        CecPowerStatus::InTransitionStandbyToOn => {
+            info!("TV turned ON - calling tv_turned_on_command");
+            if let Some(cmd) = &app_config.tv_turned_on_command {
+                let mut command = cmd.new_command();
+                debug!(
+                    "Executing tv_turned_on_command command: {:?} {:?}",
+                    command.get_program(),
+                    command.get_args()
+                );
+                if let Err(e) = command.output() {
+                    error!("Failed to execute tv_turned_on_command: {:?}", e);
+                }
+            }
+        }
+        CecPowerStatus::InTransitionOnToStandby => {
+            info!("TV turned OFF - calling tv_turned_off_command");
+            if let Some(cmd) = &app_config.tv_turned_off_command {
+                let mut command = cmd.new_command();
+                debug!(
+                    "Executing tv_turned_off_command command: {:?} {:?}",
+                    command.get_program(),
+                    command.get_args()
+                );
+                if let Err(e) = command.output() {
+                    error!("Failed to execute tv_turned_off_command: {:?}", e);
+                }
+            }
+        }
+        CecPowerStatus::Unknown => {
+            warn!("Unknown TV power status received");
+        }
+    }
 }
 
 fn on_log_message(log_message: CecLogMessage) {
@@ -214,18 +271,43 @@ pub fn main() -> Result<(), &'static str> {
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
         .build()
         .expect("Could not construct config");
-    let connection: CecConnection = connection_config.open().unwrap_or_else(|_| {
-        panic!(
-            "Adapter open failed, port {:?}",
-            app_config.hdmi_port.clone()
-        )
-    });
+    let connection: Arc<Mutex<CecConnection>> =
+        Arc::new(Mutex::new(connection_config.open().unwrap_or_else(|_| {
+            panic!(
+                "Adapter open failed, port {:?}",
+                app_config.hdmi_port.clone()
+            )
+        })));
 
-    trace!("Active source: {:?}", connection.get_active_source());
+    // Start power status polling thread
+    if app_config.tv_turned_on_command.is_some() || app_config.tv_turned_off_command.is_some() {
+        let connection_clone = connection.clone();
+        let poll_interval = Duration::from_millis(app_config.power_poll_interval_ms);
 
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(poll_interval);
+
+                // Request power status from TV (logical address 0)
+                let power_request = CecCommand {
+                    ack: true,
+                    destination: cec_rs::CecLogicalAddress::Tv,
+                    eom: true,
+                    initiator: cec_rs::CecLogicalAddress::Audiosystem, // Our address
+                    transmit_timeout: Duration::from_millis(1000),
+                    parameters: CecDatapacket(ArrayVec::new()), // No parameters
+                    opcode_set: true,
+                    opcode: cec_rs::CecOpcode::GiveDevicePowerStatus,
+                };
+                if let Err(e) = connection_clone.lock().unwrap().transmit(power_request) {
+                    debug!("Failed to request TV power status: {:?}", e);
+                }
+            }
+        });
+    }
     loop {
         if let Ok(command) = receiver.recv() {
-            match connection.transmit(command.clone()) {
+            match connection.lock().unwrap().transmit(command.clone()) {
                 Ok(_) => debug!(
                     "Sent command {:?} with parameters {:?}",
                     command.opcode, command.parameters

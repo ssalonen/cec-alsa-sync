@@ -77,7 +77,8 @@ jobs:
                   "$GCC_PREFIX"strip $BINARY_NAME
 
                   ########## create tar.gz ##########
-                  RELEASE_NAME=cec-alsa-sync-${GITHUB_REF/refs\/tags\//}-${{ matrix.job.os-name }}-${{ matrix.job.architecture }}
+                  REF_NAME=${GITHUB_REF#refs/*/}
+                  RELEASE_NAME=cec-alsa-sync-$REF_NAME-${{ matrix.job.os-name }}-${{ matrix.job.architecture }}
                   tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME
 
                   ########## create sha256 ##########

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 5.0.0
+
+- bump dependency, support for tv on/off commands
+
 ## 4.0.4
 
 - cd pipeline for aarch64-unknown-linux-gnu

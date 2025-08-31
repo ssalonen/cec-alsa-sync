@@ -90,13 +90,13 @@ jobs:
             - name: install strip command
               shell: bash
               run: |
-                  sudo apt update
+                  apt update
                   if [[ ${{ matrix.job.target }} == armv7-unknown-linux-gnueabihf ]]; then
                     BINUTILS=binutils-arm-linux-gnueabihf
                   else
                     BINUTILS=$(echo "binutils-${{ matrix.job.target }}"|sed s/unknown-//|tr _ -)
                   fi
-                  sudo apt-get install -y $BINUTILS
+                  apt-get install -y $BINUTILS
 
             - name: Packaging final binary
               shell: bash

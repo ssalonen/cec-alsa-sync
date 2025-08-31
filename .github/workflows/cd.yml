@@ -63,8 +63,9 @@ jobs:
                   fi
                   sudo apt-get install -y $BINUTILS
             - name: Packaging final binary
-              shell: bash -x
+              shell: bash
               run: |
+                  set -x
                   cd target/${{ matrix.job.target }}/release
 
                   ####### reduce binary size by removing debug symbols #######

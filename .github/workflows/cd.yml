@@ -63,7 +63,7 @@ jobs:
                   fi
                   sudo apt-get install -y $BINUTILS
             - name: Packaging final binary
-              shell: bash
+              shell: bash -x
               run: |
                   cd target/${{ matrix.job.target }}/release
 

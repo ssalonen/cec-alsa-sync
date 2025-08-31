@@ -67,13 +67,7 @@ jobs:
                   override: true
             - name: Checkout repository
               uses: actions/checkout@v2
-              
-            - if: ${{  matrix.job.LIBCEC_STATIC == '1' && runner.os == 'Linux' }}
-              name: Install build dependencies
-              run: |
-                  set -ex                 
-                  sudo apt install -yq libudev-dev
-            
+
             - name: Cargo build
               uses: actions-rs/cargo@v1
               with:

@@ -15,6 +15,3 @@ passthrough = [
 ]
 [build]
 default-target = "armv7-unknown-linux-gnueabihf"
-pre-build = [
-    "apt-get remove --allow-remove-essential -y libudev1 udev libudev-dev || :"
-]

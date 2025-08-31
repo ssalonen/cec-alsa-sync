@@ -15,3 +15,6 @@ passthrough = [
 ]
 [build]
 default-target = "armv7-unknown-linux-gnueabihf"
+pre-build = [
+    "apt-get install libudev-dev"
+]

@@ -71,6 +71,12 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v2
 
+            - name: Install libudev-dev for device detection support
+              run: |
+                dpkg --add-architecture ${{ matrix.job.deb_arch }}
+                apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
+                || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
+
             - name: Cargo build
               uses: actions-rs/cargo@v1
               with:
@@ -80,13 +86,6 @@ jobs:
               env:
                   LIBCEC_STATIC: ${{ matrix.job.LIBCEC_STATIC || '0' }}
                   LIBCEC_VENDORED: ${{ matrix.job.LIBCEC_VENDORED || '0' }}
-
-            - name: Install libudev-dev for device detection support
-              run: |
-                dpkg --add-architecture ${{ matrix.job.deb_arch }}
-                apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
-                || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
-
 
             - name: install strip command
               shell: bash

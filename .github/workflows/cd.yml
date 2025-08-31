@@ -20,18 +20,43 @@ jobs:
                       architecture: arm
                       binary-postfix: ""
                       use-cross: true
+                      LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
                       binary-postfix: ""
                       use-cross: true
+                      LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
                       binary-postfix: ""
                       use-cross: true
+                      LIBCEC_VENDORED: "1"
+                    # static builds
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: arm-unknown-linux-gnueabi
+                      architecture: arm
+                      binary-postfix: "-static"
+                      use-cross: true
+                      LIBCEC_STATIC: "1"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: armv7-unknown-linux-gnueabihf
+                      architecture: armv7
+                      binary-postfix: "-static"
+                      use-cross: true
+                      LIBCEC_STATIC: "1"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: aarch64-unknown-linux-gnu
+                      architecture: arm64
+                      binary-postfix: "-static"
+                      use-cross: true
+                      LIBCEC_STATIC: "1"
 
         steps:
             - name: Installing Rust toolchain
@@ -50,7 +75,8 @@ jobs:
                   toolchain: ${{ matrix.rust }}
                   args: --release --target ${{ matrix.job.target }}
               env:
-                  LIBCEC_VENDORED: "1"
+                  LIBCEC_STATIC: ${{ matrix.job.LIBCEC_STATIC || '0' }}
+                  LIBCEC_VENDORED: ${{ matrix.job.LIBCEC_VENDORED || '0' }}
 
             - name: install strip command
               shell: bash

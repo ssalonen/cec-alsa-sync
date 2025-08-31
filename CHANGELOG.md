@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 5.0.2
+
+- CI/CD to build static binaries as well
+
 ## 5.0.1
 
 - CI/CD fixes

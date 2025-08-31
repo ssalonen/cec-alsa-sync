@@ -117,7 +117,7 @@ jobs:
                   ########## create tar.gz ##########
                   REF_NAME=${GITHUB_REF#refs/*/}
                   RELEASE_NAME=cec-alsa-sync${{ matrix.job.binary-postfix }}-$REF_NAME-${{ matrix.job.os-name }}-${{ matrix.job.architecture }}
-                  tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME
+                  tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME${{ matrix.job.binary-postfix }}
 
                   ########## create sha256 ##########
                   if [[ ${{ runner.os }} == 'Windows' ]]; then

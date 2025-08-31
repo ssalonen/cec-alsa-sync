@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "cec-alsa-sync"
-version = "5.0.7"
+version = "5.0.8-alpha"
 dependencies = [
  "arrayvec",
  "cec-rs",

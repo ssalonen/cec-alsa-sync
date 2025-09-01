@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## 5.0.8
+
+- updated libcec-sys which brings linux kernel CEC API support also with arm (in static builds)
+
+
 ## 5.0.7
 
 - CI/CD fixes for non-static

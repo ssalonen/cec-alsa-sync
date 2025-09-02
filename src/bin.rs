@@ -196,7 +196,7 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
 }
 
 fn on_tv_power_status_changed(power_status: CecPowerStatus) {
-    info!("TV power status changed: {:?}", power_status);
+    debug!("TV power status: {:?}", power_status);
 
     let app_config = CONFIG.get().expect("Config not available");
 
@@ -207,7 +207,7 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
         CecPowerStatus::Standby => {
             debug!("TV is standby");
         }
-        CecPowerStatus::InTransitionStandbyToOn => {
+        CecPowerStatus::InTransitionStandbyToOn => { // Not happening?
             info!("TV turned ON - calling tv_turned_on_command");
             if let Some(cmd) = &app_config.tv_turned_on_command {
                 let mut command = cmd.new_command();
@@ -221,7 +221,7 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
                 }
             }
         }
-        CecPowerStatus::InTransitionOnToStandby => {
+        CecPowerStatus::InTransitionOnToStandby => {// Not happening?
             info!("TV turned OFF - calling tv_turned_off_command");
             if let Some(cmd) = &app_config.tv_turned_off_command {
                 let mut command = cmd.new_command();

@@ -14,48 +14,80 @@ jobs:
             matrix:
                 rust: [stable]
                 job:
+                    # libcec7 shared builds (vendored libcec in libcec-sys is v7)
                     - os: ubuntu-22.04
                       os-name: linux
                       target: arm-unknown-linux-gnueabi
                       architecture: arm
                       deb_arch: armel
-                      binary-postfix: ""
+                      binary-postfix: "-cec7"
                       LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
-                      binary-postfix: ""
+                      binary-postfix: "-cec7"
                       LIBCEC_VENDORED: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
-                      binary-postfix: ""
+                      binary-postfix: "-cec7"
                       LIBCEC_VENDORED: "1"
+                    # libcec6 shared builds
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: arm-unknown-linux-gnueabi
+                      architecture: arm
+                      deb_arch: armel
+                      binary-postfix: "-cec6"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      apt-libcec: libcec6
+                      apt-libcec-dev: "libcec-dev=6*"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: armv7-unknown-linux-gnueabihf
+                      architecture: armv7
+                      deb_arch: armhf
+                      binary-postfix: "-cec6"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      apt-libcec: libcec6
+                      apt-libcec-dev: "libcec-dev=6*"
+                    - os: ubuntu-22.04
+                      os-name: linux
+                      target: aarch64-unknown-linux-gnu
+                      architecture: arm64
+                      deb_arch: arm64
+                      binary-postfix: "-cec6"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      apt-libcec: libcec6
+                      apt-libcec-dev: "libcec-dev=6*"
                     # static builds
                     - os: ubuntu-22.04
                       os-name: linux
                       target: arm-unknown-linux-gnueabi
                       architecture: arm
                       deb_arch: armel
-                      binary-postfix: "-static"
+                      binary-postfix: "-cec7-static"
                       LIBCEC_STATIC: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
-                      binary-postfix: "-static"
+                      binary-postfix: "-cec7-static"
                       LIBCEC_STATIC: "1"
                     - os: ubuntu-22.04
                       os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
-                      binary-postfix: "-static"
+                      binary-postfix: "-cec7-static"
                       LIBCEC_STATIC: "1"
         container:
           image: ghcr.io/cross-rs/${{ matrix.job.target }}:main
@@ -76,6 +108,12 @@ jobs:
                 dpkg --add-architecture ${{ matrix.job.deb_arch }}
                 apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
                 || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
+
+            - name: Install libcec6
+              if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.libcec != '' && matrix.job.libcec-dev != '' }}
+              run: |
+                  apt-get update
+                  sudo apt install -yq pkg-config libp8-platform2 libp8-platform-dev ${{ matrix.job.apt-libcec }} ${{ matrix.job.apt-libcec-dev }}
 
             - name: Cargo build
               uses: actions-rs/cargo@v1

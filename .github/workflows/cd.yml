@@ -20,19 +20,25 @@ jobs:
                       architecture: arm
                       deb_arch: armel
                       binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "1"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      libcec_git_tag: libcec-7.1.1
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
                       binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "1"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      libcec_git_tag: libcec-7.1.1
                     - os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
                       binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "1"
+                      LIBCEC_VENDORED: "0"
+                      LIBCEC_STATIC: "0"
+                      libcec_git_tag: libcec-7.1.1
                     # libcec6 shared builds
                     - os-name: linux
                       target: arm-unknown-linux-gnueabi
@@ -41,8 +47,7 @@ jobs:
                       binary-postfix: "-cec6"
                       LIBCEC_VENDORED: "0"
                       LIBCEC_STATIC: "0"
-                      apt-libcec: libcec6
-                      apt-libcec-dev: "libcec-dev=6*"
+                      libcec_git_tag: libcec-6.0.2
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       architecture: armv7
@@ -50,8 +55,7 @@ jobs:
                       binary-postfix: "-cec6"
                       LIBCEC_VENDORED: "0"
                       LIBCEC_STATIC: "0"
-                      apt-libcec: libcec6
-                      apt-libcec-dev: "libcec-dev=6*"
+                      libcec_git_tag: libcec-6.0.2
                     - os-name: linux
                       target: aarch64-unknown-linux-gnu
                       architecture: arm64
@@ -59,8 +63,7 @@ jobs:
                       binary-postfix: "-cec6"
                       LIBCEC_VENDORED: "0"
                       LIBCEC_STATIC: "0"
-                      apt-libcec: libcec6
-                      apt-libcec-dev: "libcec-dev=6*"
+                      libcec_git_tag: libcec-6.0.2
                     # static builds
                     - os-name: linux
                       target: arm-unknown-linux-gnueabi
@@ -105,11 +108,23 @@ jobs:
                 apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
                 || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
 
-            - name: Install libcec6
-              if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.apt-libcec != '' && matrix.job.apt-libcec-dev != '' }}
+            # We build libcec from source as the cross image is having ancient version in the repo
+            - name: Install libcec6 (build using source)
+              if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.libcec_git_tag != '' }}
               run: |
                   apt-get update
-                  apt install -yq pkg-config libp8-platform2 libp8-platform-dev ${{ matrix.job.apt-libcec }} ${{ matrix.job.apt-libcec-dev }}
+                  apt install -yq pkg-config libp8-platform-dev
+                  
+                  rm -rf /tmp/libcec-build-tmp
+                  mkdir /tmp/libcec-build-tmp
+                  git clone --recursive https://github.com/Pulse-Eight/libcec.git /tmp/libcec-build-tmp/libcec
+                  sh -c "cd /tmp/libcec-build-tmp/libcec &&  git checkout ${{ matrix.job.libcec_git_tag }}"
+                  mkdir /tmp/libcec-build-tmp/libcec/build
+                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && cmake -DHAVE_LINUX_API=1 .."
+                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && make -j4"
+                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && make install"
+                  ldconfig
+
 
             - name: Cargo build
               uses: actions-rs/cargo@v1

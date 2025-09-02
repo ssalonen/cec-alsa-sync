@@ -260,17 +260,21 @@ pub fn main() -> Result<(), &'static str> {
     let (sender, receiver) = channel();
     let app_config = CONFIG.get().expect("Config not available");
 
-    let connection_config = CecConnectionCfgBuilder::default()
-        .port(app_config.hdmi_port.clone())
+    let mut connection_config_builder = CecConnectionCfgBuilder::default()
         .device_name(app_config.device_name.clone())
         .key_press_callback(Box::new(on_key_press))
         .command_received_callback(Box::new(move |command| {
             on_command_received(sender.clone(), command)
         }))
         .log_message_callback(Box::new(on_log_message))
-        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem))
+        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem));
+    if !app_config.hdmi_port.clone().is_empty() {
+        connection_config_builder = connection_config_builder.port(app_config.hdmi_port.clone());
+    }
+    let connection_config = connection_config_builder
         .build()
         .expect("Could not construct config");
+
     let connection: Arc<Mutex<CecConnection>> =
         Arc::new(Mutex::new(connection_config.open().unwrap_or_else(|_| {
             panic!(

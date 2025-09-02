@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 5.0.9
+
+- support autodetecting port name (omit port or leave it empty). Previous default was RPI.
 
 ## 5.0.8
 

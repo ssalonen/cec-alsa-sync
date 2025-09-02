@@ -91,7 +91,7 @@ fn default_device_name() -> String {
     "Hifiberry".to_owned()
 }
 fn default_hdmi_port() -> CString {
-    CString::new("RPI").unwrap()
+    CString::new("").unwrap()
 }
 
 const fn default_power_poll_interval_ms() -> u64 {

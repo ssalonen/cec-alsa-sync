@@ -17,6 +17,7 @@ jobs:
                     # libcec7 shared builds (vendored libcec in libcec-sys is v7)
                     - os-name: linux
                       target: arm-unknown-linux-gnueabi
+                      cross-compiler: arm-linux-gnueabi
                       architecture: arm
                       deb_arch: armel
                       binary-postfix: "-cec7"
@@ -25,6 +26,7 @@ jobs:
                       libcec_git_tag: libcec-7.1.1
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
+                      cross-compiler: arm-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
                       binary-postfix: "-cec7"
@@ -33,6 +35,7 @@ jobs:
                       libcec_git_tag: libcec-7.1.1
                     - os-name: linux
                       target: aarch64-unknown-linux-gnu
+                      cross-compiler: aarch64-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
                       binary-postfix: "-cec7"
@@ -42,6 +45,7 @@ jobs:
                     # libcec6 shared builds
                     - os-name: linux
                       target: arm-unknown-linux-gnueabi
+                      cross-compiler: arm-linux-gnueabi
                       architecture: arm
                       deb_arch: armel
                       binary-postfix: "-cec6"
@@ -50,6 +54,7 @@ jobs:
                       libcec_git_tag: libcec-6.0.2
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
+                      cross-compiler: arm-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
                       binary-postfix: "-cec6"
@@ -58,6 +63,7 @@ jobs:
                       libcec_git_tag: libcec-6.0.2
                     - os-name: linux
                       target: aarch64-unknown-linux-gnu
+                      cross-compiler: aarch64-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
                       binary-postfix: "-cec6"
@@ -67,18 +73,21 @@ jobs:
                     # static builds
                     - os-name: linux
                       target: arm-unknown-linux-gnueabi
+                      cross-compiler: arm-linux-gnueabi
                       architecture: arm
                       deb_arch: armel
                       binary-postfix: "-cec7-static"
                       LIBCEC_STATIC: "1"
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
+                      cross-compiler: arm-linux-gnueabihf
                       architecture: armv7
                       deb_arch: armhf
                       binary-postfix: "-cec7-static"
                       LIBCEC_STATIC: "1"
                     - os-name: linux
                       target: aarch64-unknown-linux-gnu
+                      cross-compiler: aarch64-linux-gnu
                       architecture: arm64
                       deb_arch: arm64
                       binary-postfix: "-cec7-static"
@@ -87,7 +96,7 @@ jobs:
           image: ghcr.io/cross-rs/${{ matrix.job.target }}:main
 
         steps:
-              
+
             - name: Installing Rust toolchain
               uses: actions-rs/toolchain@v1
               with:
@@ -104,23 +113,24 @@ jobs:
                 apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
                 || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
 
-            # We build libcec from source as the cross image is having ancient version in the repo
+            # We cross-compile libcec from source to target platform
             - name: Install libcec6 (build using source)
               if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.libcec_git_tag != '' }}
               run: |
                   apt-get update
-                  apt install -yq pkg-config libp8-platform-dev
-                  
+                  # dependencies for libcec build
+                  apt install -yq pkg-config udev:${{ matrix.job.deb_arch }} libp8-platform-dev:${{ matrix.job.deb_arch }}
+
                   rm -rf /tmp/libcec-build-tmp
                   mkdir /tmp/libcec-build-tmp
                   git clone --recursive https://github.com/Pulse-Eight/libcec.git /tmp/libcec-build-tmp/libcec
                   sh -c "cd /tmp/libcec-build-tmp/libcec &&  git checkout ${{ matrix.job.libcec_git_tag }}"
                   mkdir /tmp/libcec-build-tmp/libcec/build
-                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && cmake -DHAVE_LINUX_API=1 .."
+                  # Cross-compile!
+                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && cmake -DCMAKE_TOOLCHAIN_FILE=/tmp/libcec-build-tmp/libcec/cmake/CrossCompile.cmake -DXCOMPILE_PREFIX=${{ matrix.job.cross-compiler }}- -DXCOMPILE_LIB_PATH=/usr/lib/${{ matrix.job.cross-compiler }}/ -DHAVE_LINUX_API=1 .."
                   sh -c "cd /tmp/libcec-build-tmp/libcec/build && make -j4"
                   sh -c "cd /tmp/libcec-build-tmp/libcec/build && make install"
                   ldconfig
-
 
             - name: Cargo build
               uses: actions-rs/cargo@v1
@@ -157,7 +167,7 @@ jobs:
                     GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
                   fi
                   "$GCC_PREFIX"strip $BINARY_NAME
-                  if [[ "${{ matrix.job.binary-postfix }}" != "" ]]; then                    
+                  if [[ "${{ matrix.job.binary-postfix }}" != "" ]]; then
                     mv $BINARY_NAME $BINARY_NAME${{ matrix.job.binary-postfix }}
                   fi
 

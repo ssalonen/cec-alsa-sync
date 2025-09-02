@@ -8,7 +8,7 @@ on:
 
 jobs:
     publish:
-        name: Publishing for ${{ matrix.job.target }}${{ matrix.job.LIBCEC_STATIC && ' static' }}
+        name: Publishing for ${{ matrix.job.target }} ${{ matrix.job.LIBCEC_STATIC && 'static' || matrix.job.apt-libcec }} }}
         runs-on: ${{ matrix.job.os }}
         strategy:
             matrix:

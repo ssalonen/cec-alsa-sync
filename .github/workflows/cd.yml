@@ -89,7 +89,7 @@ jobs:
                 || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
 
             # We cross-compile libcec from source to target platform
-            - name: Install libcec6 (build using source)
+            - name: Install libcec (build using source)
               if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.libcec_git_tag != '' }}
               run: |
                   apt-get update

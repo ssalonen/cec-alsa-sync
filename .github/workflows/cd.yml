@@ -16,15 +16,6 @@ jobs:
                 job:
                     # libcec7 shared builds (vendored libcec in libcec-sys is v7)
                     - os-name: linux
-                      target: arm-unknown-linux-gnueabi
-                      cross-compiler: arm-linux-gnueabi
-                      architecture: arm
-                      deb_arch: armel
-                      binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-7.1.1
-                    - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       cross-compiler: arm-linux-gnueabihf
                       architecture: armv7
@@ -44,15 +35,6 @@ jobs:
                       libcec_git_tag: libcec-7.1.1
                     # libcec6 shared builds
                     - os-name: linux
-                      target: arm-unknown-linux-gnueabi
-                      cross-compiler: arm-linux-gnueabi
-                      architecture: arm
-                      deb_arch: armel
-                      binary-postfix: "-cec6"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-6.0.2
-                    - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       cross-compiler: arm-linux-gnueabihf
                       architecture: armv7
@@ -71,13 +53,6 @@ jobs:
                       LIBCEC_STATIC: "0"
                       libcec_git_tag: libcec-6.0.2
                     # static builds
-                    - os-name: linux
-                      target: arm-unknown-linux-gnueabi
-                      cross-compiler: arm-linux-gnueabi
-                      architecture: arm
-                      deb_arch: armel
-                      binary-postfix: "-cec7-static"
-                      LIBCEC_STATIC: "1"
                     - os-name: linux
                       target: armv7-unknown-linux-gnueabihf
                       cross-compiler: arm-linux-gnueabihf

@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 5.0.10
+
+- manually track TV state (on/standby) and trigger commands on change
+- default tv power state polling now 5 sec (previously 0.5 sec)
+- throttling all cec command transmissions with 500 ms delay (spec)
+
 ## 5.0.9
 
 - support autodetecting port name (omit port or leave it empty). Previous default was RPI.
 - ci/cd: build for libcec6 shared libraries
+- ci/cd: drop support for arm-unknown-linux-gnueabi (armel)
 
 ## 5.0.8
 

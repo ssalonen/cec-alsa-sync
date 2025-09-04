@@ -95,7 +95,7 @@ fn default_hdmi_port() -> CString {
 }
 
 const fn default_power_poll_interval_ms() -> u64 {
-    500
+    5000
 }
 
 pub static CONFIG: OnceCell<AppConfig> = OnceCell::new();

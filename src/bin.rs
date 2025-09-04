@@ -3,8 +3,8 @@ use log::{debug, error, info, trace, warn};
 extern crate cec_rs;
 use arrayvec::ArrayVec;
 use cec_rs::{
-    CecCommand, CecConnection, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType,
-    CecDeviceTypeVec, CecKeypress, CecLogMessage, CecPowerStatus, CecUserControlCode,
+    CecCommand, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType, CecDeviceTypeVec,
+    CecKeypress, CecLogMessage, CecPowerStatus, CecUserControlCode,
 };
 
 use std::convert::TryFrom;
@@ -14,7 +14,7 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::{channel, Sender};
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::time::Duration;
 
 mod config;
@@ -23,6 +23,8 @@ use config::CONFIG;
 use crate::config::{AppConfig, CreatesCommand};
 
 struct VolumePercent(u8);
+
+static TV_ON: Mutex<Option<CecPowerStatus>> = Mutex::new(None);
 
 impl TryFrom<u8> for VolumePercent {
     type Error = ();
@@ -163,7 +165,6 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                 })
                 .unwrap_or(false)
             {
-                // TODO: Throttle these ones with 500ms to be compliant
                 sender
                     .send(CecCommand {
                         ack: true,
@@ -197,17 +198,20 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
 
 fn on_tv_power_status_changed(power_status: CecPowerStatus) {
     debug!("TV power status: {:?}", power_status);
+    let mut prev_tv_on = TV_ON.lock().unwrap();
+    if prev_tv_on.is_none() {
+        *prev_tv_on = Some(power_status);
+    }
 
     let app_config = CONFIG.get().expect("Config not available");
 
+    if *prev_tv_on == Some(power_status) {
+        debug!("TV power status unchanged");
+        return;
+    }
+
     match power_status {
         CecPowerStatus::On => {
-            debug!("TV is ON");
-        }
-        CecPowerStatus::Standby => {
-            debug!("TV is standby");
-        }
-        CecPowerStatus::InTransitionStandbyToOn => { // Not happening?
             info!("TV turned ON - calling tv_turned_on_command");
             if let Some(cmd) = &app_config.tv_turned_on_command {
                 let mut command = cmd.new_command();
@@ -221,7 +225,7 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
                 }
             }
         }
-        CecPowerStatus::InTransitionOnToStandby => {// Not happening?
+        CecPowerStatus::Standby => {
             info!("TV turned OFF - calling tv_turned_off_command");
             if let Some(cmd) = &app_config.tv_turned_off_command {
                 let mut command = cmd.new_command();
@@ -235,10 +239,17 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
                 }
             }
         }
+        CecPowerStatus::InTransitionStandbyToOn => {
+            // Not happening in practice with Samsung?
+        }
+        CecPowerStatus::InTransitionOnToStandby => {
+            // Not happening in practice with Samsung?
+        }
         CecPowerStatus::Unknown => {
             warn!("Unknown TV power status received");
         }
     }
+    *prev_tv_on = Some(power_status);
 }
 
 fn on_log_message(log_message: CecLogMessage) {
@@ -260,11 +271,13 @@ pub fn main() -> Result<(), &'static str> {
     let (sender, receiver) = channel();
     let app_config = CONFIG.get().expect("Config not available");
 
+    let sender_for_callbacks = sender.clone();
+
     let mut connection_config_builder = CecConnectionCfgBuilder::default()
         .device_name(app_config.device_name.clone())
         .key_press_callback(Box::new(on_key_press))
         .command_received_callback(Box::new(move |command| {
-            on_command_received(sender.clone(), command)
+            on_command_received(sender_for_callbacks.clone(), command)
         }))
         .log_message_callback(Box::new(on_log_message))
         .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem));
@@ -275,18 +288,20 @@ pub fn main() -> Result<(), &'static str> {
         .build()
         .expect("Could not construct config");
 
-    let connection: Arc<Mutex<CecConnection>> =
-        Arc::new(Mutex::new(connection_config.open().unwrap_or_else(|_| {
-            panic!(
-                "Adapter open failed, port {:?}",
-                app_config.hdmi_port.clone()
-            )
-        })));
+    let connection = connection_config.open().unwrap_or_else(|_| {
+        panic!(
+            "Adapter open failed, port {:?}",
+            app_config.hdmi_port.clone()
+        )
+    });
 
     // Start power status polling thread
-    if app_config.tv_turned_on_command.is_some() || app_config.tv_turned_off_command.is_some() {
-        let connection_clone = connection.clone();
+    if app_config.power_poll_interval_ms != 0
+        && (app_config.tv_turned_on_command.is_some() || app_config.tv_turned_off_command.is_some())
+    {
         let poll_interval = Duration::from_millis(app_config.power_poll_interval_ms);
+
+        let sender_for_polling = sender.clone();
 
         std::thread::spawn(move || {
             loop {
@@ -303,21 +318,23 @@ pub fn main() -> Result<(), &'static str> {
                     opcode_set: true,
                     opcode: cec_rs::CecOpcode::GiveDevicePowerStatus,
                 };
-                if let Err(e) = connection_clone.lock().unwrap().transmit(power_request) {
-                    debug!("Failed to request TV power status: {:?}", e);
-                }
+                sender_for_polling
+                    .send(power_request)
+                    .expect("internal channel send failed");
             }
         });
     }
+
     loop {
         if let Ok(command) = receiver.recv() {
-            match connection.lock().unwrap().transmit(command.clone()) {
+            match connection.transmit(command.clone()) {
                 Ok(_) => debug!(
                     "Sent command {:?} with parameters {:?}",
                     command.opcode, command.parameters
                 ),
                 Err(e) => warn!("Could not send command {:?}: {:?}", command.opcode, e),
             };
+            std::thread::sleep(Duration::from_millis(500));
         } else {
             error!("Shutting down, no more commands");
             break;

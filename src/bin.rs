@@ -307,15 +307,6 @@ pub fn main() -> Result<(), &'static str> {
             loop {
                 std::thread::sleep(poll_interval);
 
-                // Skip polling if TV is already in standby
-                {
-                    let tv_power_status = TV_ON.lock().unwrap();
-                    if let Some(CecPowerStatus::Standby) = *tv_power_status {
-                        debug!("TV is in standby, skipping power status poll");
-                        continue;
-                    }
-                }
-
                 // Request power status from TV (logical address 0)
                 let power_request = CecCommand {
                     ack: true,

@@ -5,6 +5,9 @@ on:
     pull_request:
         branches:
             - master
+    # Allows re-running CI on demand, e.g. for pull requests whose original
+    # workflow logs have already been expired by GitHub.
+    workflow_dispatch:
 name: Continuous Integration
 
 jobs:

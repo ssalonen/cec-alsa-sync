@@ -182,14 +182,12 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                     .expect("internal channel send failed");
             }
         }
-        cec_rs::CecOpcode::ReportPowerStatus => {
-            if !command.parameters.0.is_empty() {
-                let power_status = CecPowerStatus::from_repr(command.parameters.0[0] as _);
-                if let Some(power_status) = power_status {
-                    if matches!(command.initiator, cec_rs::CecLogicalAddress::Tv) {
-                        on_tv_power_status_changed(power_status);
-                    }
-                }
+        cec_rs::CecOpcode::ReportPowerStatus
+            if matches!(command.initiator, cec_rs::CecLogicalAddress::Tv)
+                && !command.parameters.0.is_empty() =>
+        {
+            if let Some(power_status) = CecPowerStatus::from_repr(command.parameters.0[0] as _) {
+                on_tv_power_status_changed(power_status);
             }
         }
         _ => {}

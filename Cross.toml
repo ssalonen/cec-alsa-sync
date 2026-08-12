@@ -16,5 +16,11 @@ passthrough = [
 [build]
 default-target = "armv7-unknown-linux-gnueabihf"
 pre-build = [
-    "apt-get install --allow-remove-essential -y libudev1 udev libudev-dev || :"
+    # libcec links against libudev for device detection. It has to be the copy for
+    # the *target* architecture: a host-architecture libudev-dev is still picked up
+    # by libcec's cmake probe, but then the target link fails with
+    # "cannot find -ludev". If libudev-dev is not published for the target
+    # architecture (e.g. armel), libcec is built without device detection instead.
+    "dpkg --add-architecture $CROSS_DEB_ARCH || :",
+    "apt-get update && apt-get install --assume-yes libudev-dev:$CROSS_DEB_ARCH || echo \"Could not install libudev-dev:$CROSS_DEB_ARCH. Libcec device detection will be unavailable\""
 ]

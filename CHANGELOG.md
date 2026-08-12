@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- ci: install libudev-dev for the *target* architecture in the cross build, fixing "cannot find -ludev" link failures
+- ci: fix clippy `collapsible_match` warning in `on_command_received`
+- ci: allow the CI workflow to be triggered manually (`workflow_dispatch`)
+
 ## 5.0.12
 
 - revert 5.0.11 change

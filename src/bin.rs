@@ -145,10 +145,7 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                     command.initiator,
                     command.destination,
                     Opcode::ReportAudioStatus,
-                    audio_status_data_packet(
-                        false,
-                        VolumePercent::try_from(50u8).unwrap(),
-                    ), // FIXME:real volume
+                    audio_status_data_packet(false, VolumePercent::try_from(50u8).unwrap()), // FIXME:real volume
                 ))
                 .expect("internal channel send failed");
         }
@@ -162,16 +159,14 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
                         command.initiator,
                         command.destination,
                         Opcode::ReportAudioStatus,
-                        audio_status_data_packet(
-                            false,
-                            VolumePercent::try_from(50u8).unwrap(),
-                        ), // FIXME:real volume
+                        audio_status_data_packet(false, VolumePercent::try_from(50u8).unwrap()), // FIXME:real volume
                     ))
                     .expect("internal channel send failed");
             }
         }
         Opcode::ReportPowerStatus
-            if matches!(command.initiator, LogicalAddress::Tv) && !command.parameters.is_empty() =>
+            if matches!(command.initiator, LogicalAddress::Tv)
+                && !command.parameters.is_empty() =>
         {
             on_tv_power_status_changed(PowerStatus::from_raw(command.parameters[0] as _));
         }
@@ -244,7 +239,10 @@ fn on_log_message(log_message: LogMessage) {
         LogLevel::Notice => info!("cec log: {:?}", log_message.message),
         LogLevel::Warning => warn!("cec log: {:?}", log_message.message),
         LogLevel::Error => error!("cec log: {:?}", log_message.message),
-        LogLevel::Other(level) => warn!("CEC log with unknown level {level}: {:?}", log_message.message),
+        LogLevel::Other(level) => warn!(
+            "CEC log with unknown level {level}: {:?}",
+            log_message.message
+        ),
     }
 }
 
@@ -259,15 +257,18 @@ pub fn main() -> Result<(), &'static str> {
     let connection_builder = ConnectionBuilder::new(app_config.device_name.clone())
         .device_type(DeviceType::AudioSystem)
         .callbacks(callback_handler);
-    let port = app_config.hdmi_port.to_str().expect("invalid HDMI port name");
+    let port = app_config
+        .hdmi_port
+        .to_str()
+        .expect("invalid HDMI port name");
     let connection = connection_builder
         .open((!port.is_empty()).then_some(port), Duration::from_secs(10))
         .unwrap_or_else(|_| {
-        panic!(
-            "Adapter open failed, port {:?}",
-            app_config.hdmi_port.clone()
-        )
-    });
+            panic!(
+                "Adapter open failed, port {:?}",
+                app_config.hdmi_port.clone()
+            )
+        });
 
     let sender_for_callbacks = sender.clone();
     std::thread::spawn(move || {
@@ -296,9 +297,10 @@ pub fn main() -> Result<(), &'static str> {
                 std::thread::sleep(poll_interval);
 
                 // Request power status from TV (logical address 0)
-                let power_request = CecCommand::new(LogicalAddress::Tv, Opcode::GiveDevicePowerStatus)
-                    .from_initiator(LogicalAddress::AudioSystem)
-                    .with_timeout(Duration::from_millis(1000));
+                let power_request =
+                    CecCommand::new(LogicalAddress::Tv, Opcode::GiveDevicePowerStatus)
+                        .from_initiator(LogicalAddress::AudioSystem)
+                        .with_timeout(Duration::from_millis(1000));
                 sender_for_polling
                     .send(power_request)
                     .expect("internal channel send failed");

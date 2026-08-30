@@ -52,9 +52,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/libcec"/*.zip -d "$RUNNER_TEMP/libcec/unpacked"
           echo "LIBCEC_LIB_DIR=$(find "$RUNNER_TEMP/libcec/unpacked" -type f -name libcec.so -printf '%h\n' -quit)" >> "$GITHUB_ENV"
       - name: Run unit tests
-        run: cargo test --bin cec-alsa-sync --verbose
-        env:
-          LD_LIBRARY_PATH: ${{ env.LIBCEC_LIB_DIR }}
+        run: LD_LIBRARY_PATH="$LIBCEC_LIB_DIR" cargo test --bin cec-alsa-sync --verbose
 
   rustfmt:
     name: Rustfmt

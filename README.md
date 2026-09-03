@@ -46,4 +46,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Releasing
 
-```cargo release --no-publish``` for a dry run. Then execute with ```cargo release --no-publish --execute``` and let the github CD pipeline do the rest.
+1. Update `Cargo.toml` and `CHANGELOG.md`, then run `cargo fmt --all -- --check`,
+   `cargo check --all-targets`, and `cargo test --bin cec-alsa-sync` against a
+   matching libCEC 8 runtime.
+2. Commit the release and create an annotated `vX.Y.Z` tag.
+3. Push the commit and tag. The GitHub CD workflow builds ARMv7 and ARM64 bundles
+   with the matching libCEC 8 runtime library and publishes them to the release.

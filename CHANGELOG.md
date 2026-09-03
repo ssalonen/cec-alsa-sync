@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 6.0.0
+
+### Breaking changes
+
+- Replace `cec-rs` and `libcec-sys` with Pulse-Eight's official `libcec` crate 8.1.6.
+- Require a matching libCEC 8.x shared library at build and runtime; libCEC 6/7 builds are no longer supported.
+- Release bundles now include the matching libCEC 8 shared runtime library.
+
+### Changed
+
+- CI cross-checks supported ARM targets and runs the test suite against the published libCEC 8 artifact.
+
+## 5.0.13
+
 - ci: install libudev-dev for the *target* architecture in the cross build, fixing "cannot find -ludev" link failures
 - ci: fix clippy `collapsible_match` warning in `on_command_received`
 - ci: allow the CI workflow to be triggered manually (`workflow_dispatch`)

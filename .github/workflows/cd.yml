@@ -33,6 +33,8 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Fetch matching libCEC 8 shared library
         run: |
+          apt-get update
+          apt-get install --yes unzip
           mkdir -p libcec
           curl --fail --location --retry 3 \
             --output libcec/libcec.zip \

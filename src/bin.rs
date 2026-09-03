@@ -1,18 +1,15 @@
 use log::{debug, error, info, trace, warn};
 
-extern crate cec_rs;
-use arrayvec::ArrayVec;
-use cec_rs::{
-    CecCommand, CecConnectionCfgBuilder, CecDatapacket, CecDeviceType, CecDeviceTypeVec,
-    CecKeypress, CecLogMessage, CecPowerStatus, CecUserControlCode,
-};
+use libcec::callbacks::channel;
+use libcec::enums::{DeviceType, LogLevel, LogicalAddress, Opcode, PowerStatus, UserControlCode};
+use libcec::{CecEvent, Command as CecCommand, ConnectionBuilder, Keypress, LogMessage};
 
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::Command;
-use std::sync::mpsc::{channel, Sender};
+use std::sync::mpsc::{channel as command_channel, Sender};
 
 use std::sync::Mutex;
 use std::time::Duration;
@@ -24,7 +21,7 @@ use crate::config::{AppConfig, CreatesCommand};
 
 struct VolumePercent(u8);
 
-static TV_ON: Mutex<Option<CecPowerStatus>> = Mutex::new(None);
+static TV_ON: Mutex<Option<PowerStatus>> = Mutex::new(None);
 
 impl TryFrom<u8> for VolumePercent {
     type Error = ();
@@ -43,8 +40,8 @@ impl VolumePercent {
     }
 }
 
-fn audio_status_data_packet(mute: bool, volume: VolumePercent) -> CecDatapacket {
-    let mut data = ArrayVec::<u8, 64>::new();
+fn audio_status_data_packet(mute: bool, volume: VolumePercent) -> Vec<u8> {
+    let mut data = Vec::with_capacity(1);
     // Audio Status payload is 1 byte
     // Bit 7: Audio Mute Status. 0=Mute off, 1=Mute on
     // Bit 0-6: Audio Volume Status
@@ -60,16 +57,26 @@ fn audio_status_data_packet(mute: bool, volume: VolumePercent) -> CecDatapacket 
         volume_low_7bits
     });
 
-    CecDatapacket(data)
+    data
 }
 
-fn bool_data_packet(val: bool) -> CecDatapacket {
-    let mut data = ArrayVec::<u8, 64>::new();
-    data.push(if val { 1 } else { 0 });
-    CecDatapacket(data)
+fn bool_data_packet(val: bool) -> Vec<u8> {
+    vec![u8::from(val)]
 }
 
-fn on_key_press(keypress: CecKeypress) {
+fn response_command(
+    destination: LogicalAddress,
+    initiator: LogicalAddress,
+    opcode: Opcode,
+    parameters: Vec<u8>,
+) -> CecCommand {
+    CecCommand::new(destination, opcode)
+        .from_initiator(initiator)
+        .with_parameters(parameters)
+        .with_timeout(Duration::from_millis(500))
+}
+
+fn on_key_press(keypress: Keypress) {
     trace!(
         "onKeyPress: {:?}, keycode: {:?}, duration: {:?}",
         keypress,
@@ -78,9 +85,9 @@ fn on_key_press(keypress: CecKeypress) {
     );
     let app_config = CONFIG.get().expect("Config not available");
     let command: Option<Command> = match keypress.keycode {
-        CecUserControlCode::VolumeUp => Some(app_config.vol_up_command.new_command()),
-        CecUserControlCode::VolumeDown => Some(app_config.vol_down_command.new_command()),
-        CecUserControlCode::Mute => {
+        UserControlCode::VolumeUp => Some(app_config.vol_up_command.new_command()),
+        UserControlCode::VolumeDown => Some(app_config.vol_down_command.new_command()),
+        UserControlCode::Mute => {
             if keypress.duration.is_zero() {
                 // Filter duplicate events
                 None
@@ -107,94 +114,67 @@ fn on_command_received(sender: Sender<CecCommand>, command: CecCommand) {
         command.initiator
     );
     match command.opcode {
-        cec_rs::CecOpcode::SystemAudioModeRequest => {
+        Opcode::SystemAudioModeRequest => {
             // SystemAudioModeRequest(physical address of the device that should be active system audio)
 
             // Note: We set system audio mode no matter what the parameter in the SystemAudioModeRequest command
             // Reply with SetSystemAudioMode
             sender
-                .send(CecCommand {
-                    ack: true,
-                    destination: command.initiator,
-                    eom: true,
-                    initiator: command.destination,
-                    transmit_timeout: Duration::from_millis(500),
-                    parameters: bool_data_packet(true),
-                    opcode_set: true,
-                    opcode: cec_rs::CecOpcode::SetSystemAudioMode,
-                })
+                .send(response_command(
+                    command.initiator,
+                    command.destination,
+                    Opcode::SetSystemAudioMode,
+                    bool_data_packet(true),
+                ))
                 .expect("internal channel send failed");
         }
-        cec_rs::CecOpcode::GiveSystemAudioModeStatus => {
+        Opcode::GiveSystemAudioModeStatus => {
             // Reply with SystemAudioModeStatus
             sender
-                .send(CecCommand {
-                    ack: true,
-                    destination: command.initiator,
-                    eom: true,
-                    initiator: command.destination,
-                    transmit_timeout: Duration::from_millis(500),
-                    parameters: bool_data_packet(true),
-                    opcode_set: true,
-                    opcode: cec_rs::CecOpcode::SystemAudioModeStatus,
-                })
+                .send(response_command(
+                    command.initiator,
+                    command.destination,
+                    Opcode::SystemAudioModeStatus,
+                    bool_data_packet(true),
+                ))
                 .expect("internal channel send failed");
         }
-        cec_rs::CecOpcode::GiveAudioStatus => {
+        Opcode::GiveAudioStatus => {
             sender
-                .send(CecCommand {
-                    ack: true,
-                    destination: command.initiator,
-                    eom: true,
-                    initiator: command.destination,
-                    transmit_timeout: Duration::from_millis(500),
-                    parameters: audio_status_data_packet(
-                        false,
-                        VolumePercent::try_from(50u8).unwrap(),
-                    ), // FIXME:real volume
-                    opcode_set: true,
-                    opcode: cec_rs::CecOpcode::ReportAudioStatus,
-                })
+                .send(response_command(
+                    command.initiator,
+                    command.destination,
+                    Opcode::ReportAudioStatus,
+                    audio_status_data_packet(false, VolumePercent::try_from(50u8).unwrap()), // FIXME:real volume
+                ))
                 .expect("internal channel send failed");
         }
-        cec_rs::CecOpcode::UserControlPressed => {
-            let user_control_code = CecUserControlCode::from_repr(command.parameters.0[0] as u32);
-            if user_control_code
-                .map(|cc| {
-                    cc == CecUserControlCode::VolumeDown || cc == CecUserControlCode::VolumeUp
-                })
-                .unwrap_or(false)
+        Opcode::UserControlPressed if !command.parameters.is_empty() => {
+            let user_control_code = UserControlCode::from_raw(command.parameters[0] as i32);
+            if user_control_code == UserControlCode::VolumeDown
+                || user_control_code == UserControlCode::VolumeUp
             {
                 sender
-                    .send(CecCommand {
-                        ack: true,
-                        destination: command.initiator,
-                        eom: true,
-                        initiator: command.destination,
-                        transmit_timeout: Duration::from_millis(500),
-                        parameters: audio_status_data_packet(
-                            false,
-                            VolumePercent::try_from(50u8).unwrap(),
-                        ), // FIXME:real volume
-                        opcode_set: true,
-                        opcode: cec_rs::CecOpcode::ReportAudioStatus,
-                    })
+                    .send(response_command(
+                        command.initiator,
+                        command.destination,
+                        Opcode::ReportAudioStatus,
+                        audio_status_data_packet(false, VolumePercent::try_from(50u8).unwrap()), // FIXME:real volume
+                    ))
                     .expect("internal channel send failed");
             }
         }
-        cec_rs::CecOpcode::ReportPowerStatus
-            if matches!(command.initiator, cec_rs::CecLogicalAddress::Tv)
-                && !command.parameters.0.is_empty() =>
+        Opcode::ReportPowerStatus
+            if matches!(command.initiator, LogicalAddress::Tv)
+                && !command.parameters.is_empty() =>
         {
-            if let Some(power_status) = CecPowerStatus::from_repr(command.parameters.0[0] as _) {
-                on_tv_power_status_changed(power_status);
-            }
+            on_tv_power_status_changed(PowerStatus::from_raw(command.parameters[0] as _));
         }
         _ => {}
     };
 }
 
-fn on_tv_power_status_changed(power_status: CecPowerStatus) {
+fn on_tv_power_status_changed(power_status: PowerStatus) {
     debug!("TV power status: {:?}", power_status);
     let mut prev_tv_on = TV_ON.lock().unwrap();
     if prev_tv_on.is_none() {
@@ -209,7 +189,7 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
     }
 
     match power_status {
-        CecPowerStatus::On => {
+        PowerStatus::On => {
             info!("TV turned ON - calling tv_turned_on_command");
             if let Some(cmd) = &app_config.tv_turned_on_command {
                 let mut command = cmd.new_command();
@@ -223,7 +203,7 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
                 }
             }
         }
-        CecPowerStatus::Standby => {
+        PowerStatus::Standby => {
             info!("TV turned OFF - calling tv_turned_off_command");
             if let Some(cmd) = &app_config.tv_turned_off_command {
                 let mut command = cmd.new_command();
@@ -237,28 +217,32 @@ fn on_tv_power_status_changed(power_status: CecPowerStatus) {
                 }
             }
         }
-        CecPowerStatus::InTransitionStandbyToOn => {
+        PowerStatus::InTransitionStandbyToOn => {
             // Not happening in practice with Samsung?
         }
-        CecPowerStatus::InTransitionOnToStandby => {
+        PowerStatus::InTransitionOnToStandby => {
             // Not happening in practice with Samsung?
         }
-        CecPowerStatus::Unknown => {
+        PowerStatus::Unknown | PowerStatus::Other(_) => {
             warn!("Unknown TV power status received");
         }
     }
     *prev_tv_on = Some(power_status);
 }
 
-fn on_log_message(log_message: CecLogMessage) {
+fn on_log_message(log_message: LogMessage) {
     match log_message.level {
-        cec_rs::CecLogLevel::All => trace!("cec log: {:?}", log_message.message),
-        cec_rs::CecLogLevel::Debug | cec_rs::CecLogLevel::Traffic => {
+        LogLevel::All => trace!("cec log: {:?}", log_message.message),
+        LogLevel::Debug | LogLevel::Traffic => {
             debug!("cec log: {:?}", log_message.message)
         }
-        cec_rs::CecLogLevel::Notice => info!("cec log: {:?}", log_message.message),
-        cec_rs::CecLogLevel::Warning => warn!("cec log: {:?}", log_message.message),
-        cec_rs::CecLogLevel::Error => error!("cec log: {:?}", log_message.message),
+        LogLevel::Notice => info!("cec log: {:?}", log_message.message),
+        LogLevel::Warning => warn!("cec log: {:?}", log_message.message),
+        LogLevel::Error => error!("cec log: {:?}", log_message.message),
+        LogLevel::Other(level) => warn!(
+            "CEC log with unknown level {level}: {:?}",
+            log_message.message
+        ),
     }
 }
 
@@ -266,31 +250,38 @@ pub fn main() -> Result<(), &'static str> {
     env_logger::init();
     read_config()?;
 
-    let (sender, receiver) = channel();
+    let (sender, receiver) = command_channel();
     let app_config = CONFIG.get().expect("Config not available");
 
+    let (callback_handler, callback_events) = channel();
+    let connection_builder = ConnectionBuilder::new(app_config.device_name.clone())
+        .device_type(DeviceType::AudioSystem)
+        .callbacks(callback_handler);
+    let port = app_config
+        .hdmi_port
+        .to_str()
+        .expect("invalid HDMI port name");
+    let connection = connection_builder
+        .open((!port.is_empty()).then_some(port), Duration::from_secs(10))
+        .unwrap_or_else(|_| {
+            panic!(
+                "Adapter open failed, port {:?}",
+                app_config.hdmi_port.clone()
+            )
+        });
+
     let sender_for_callbacks = sender.clone();
-
-    let mut connection_config_builder = CecConnectionCfgBuilder::default()
-        .device_name(app_config.device_name.clone())
-        .key_press_callback(Box::new(on_key_press))
-        .command_received_callback(Box::new(move |command| {
-            on_command_received(sender_for_callbacks.clone(), command)
-        }))
-        .log_message_callback(Box::new(on_log_message))
-        .device_types(CecDeviceTypeVec::new(CecDeviceType::AudioSystem));
-    if !app_config.hdmi_port.clone().is_empty() {
-        connection_config_builder = connection_config_builder.port(app_config.hdmi_port.clone());
-    }
-    let connection_config = connection_config_builder
-        .build()
-        .expect("Could not construct config");
-
-    let connection = connection_config.open().unwrap_or_else(|_| {
-        panic!(
-            "Adapter open failed, port {:?}",
-            app_config.hdmi_port.clone()
-        )
+    std::thread::spawn(move || {
+        for event in callback_events {
+            match event {
+                CecEvent::KeyPress(keypress) => on_key_press(keypress),
+                CecEvent::Command(command) => {
+                    on_command_received(sender_for_callbacks.clone(), command)
+                }
+                CecEvent::LogMessage(log_message) => on_log_message(log_message),
+                _ => {}
+            }
+        }
     });
 
     // Start power status polling thread
@@ -306,16 +297,10 @@ pub fn main() -> Result<(), &'static str> {
                 std::thread::sleep(poll_interval);
 
                 // Request power status from TV (logical address 0)
-                let power_request = CecCommand {
-                    ack: true,
-                    destination: cec_rs::CecLogicalAddress::Tv,
-                    eom: true,
-                    initiator: cec_rs::CecLogicalAddress::Audiosystem, // Our address
-                    transmit_timeout: Duration::from_millis(1000),
-                    parameters: CecDatapacket(ArrayVec::new()), // No parameters
-                    opcode_set: true,
-                    opcode: cec_rs::CecOpcode::GiveDevicePowerStatus,
-                };
+                let power_request =
+                    CecCommand::new(LogicalAddress::Tv, Opcode::GiveDevicePowerStatus)
+                        .from_initiator(LogicalAddress::AudioSystem)
+                        .with_timeout(Duration::from_millis(1000));
                 sender_for_polling
                     .send(power_request)
                     .expect("internal channel send failed");
@@ -325,7 +310,7 @@ pub fn main() -> Result<(), &'static str> {
 
     loop {
         if let Ok(command) = receiver.recv() {
-            match connection.transmit(command.clone()) {
+            match connection.transmit(&command) {
                 Ok(_) => debug!(
                     "Sent command {:?} with parameters {:?}",
                     command.opcode, command.parameters
@@ -359,4 +344,25 @@ fn read_config() -> Result<(), &'static str> {
     let c: AppConfig = toml::from_str(&contents).expect("error while reading config");
     CONFIG.set(c).expect("failed to set config");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn response_command_replies_to_the_sender_with_the_requested_payload() {
+        let command = response_command(
+            LogicalAddress::Tv,
+            LogicalAddress::AudioSystem,
+            Opcode::ReportAudioStatus,
+            vec![0x32],
+        );
+
+        assert_eq!(command.destination, LogicalAddress::Tv);
+        assert_eq!(command.initiator, LogicalAddress::AudioSystem);
+        assert_eq!(command.opcode, Opcode::ReportAudioStatus);
+        assert_eq!(command.parameters, vec![0x32]);
+        assert_eq!(command.transmit_timeout, Duration::from_millis(500));
+    }
 }

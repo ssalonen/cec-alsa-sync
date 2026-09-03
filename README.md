@@ -7,6 +7,12 @@
 
 Small command line application to command ALSA volume using CEC via Rasberry Pi HDMI port.
 
+It uses Pulse-Eight's official [`libcec` Rust crate](https://crates.io/crates/libcec),
+which requires a matching libCEC 8.x shared library at build and runtime. Install
+libCEC 8 from your distribution or provide its directory with `LIBCEC_LIB_DIR`; for
+an unpacked release artifact, also expose that directory at runtime (for example,
+`LD_LIBRARY_PATH=/path/to/lib`).
+
 This can be used to control e.g. Hifiberry DSP volume using TV remote.
 
 ## Installation

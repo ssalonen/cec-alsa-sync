@@ -1,184 +1,61 @@
 name: Continuous Deployment
 
 on:
-    push:
-        tags:
-            - "v?[0-9]+.[0-9]+.[0-9]+"
-    workflow_dispatch:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  LIBCEC_VERSION: 8.1.6
+  LIBCEC_STATIC_RELEASE: libcec-v8.1.6-202608-2
 
 jobs:
-    publish:
-        name: Publishing for ${{ matrix.job.target }} ${{ matrix.job.LIBCEC_STATIC == '1' && 'static' || matrix.job.libcec_git_tag }}
-        runs-on: ubuntu-22.04
-        strategy:
-            matrix:
-                rust: [stable]
-                job:
-                    # libcec7 shared builds (vendored libcec in libcec-sys is v7)
-                    - os-name: linux
-                      target: armv7-unknown-linux-gnueabihf
-                      cross-compiler: arm-linux-gnueabihf
-                      architecture: armv7
-                      deb_arch: armhf
-                      binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-7.1.1
-                    - os-name: linux
-                      target: aarch64-unknown-linux-gnu
-                      cross-compiler: aarch64-linux-gnu
-                      architecture: arm64
-                      deb_arch: arm64
-                      binary-postfix: "-cec7"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-7.1.1
-                    # libcec6 shared builds
-                    - os-name: linux
-                      target: armv7-unknown-linux-gnueabihf
-                      cross-compiler: arm-linux-gnueabihf
-                      architecture: armv7
-                      deb_arch: armhf
-                      binary-postfix: "-cec6"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-6.0.2
-                    - os-name: linux
-                      target: aarch64-unknown-linux-gnu
-                      cross-compiler: aarch64-linux-gnu
-                      architecture: arm64
-                      deb_arch: arm64
-                      binary-postfix: "-cec6"
-                      LIBCEC_VENDORED: "0"
-                      LIBCEC_STATIC: "0"
-                      libcec_git_tag: libcec-6.0.2
-                    # static builds
-                    - os-name: linux
-                      target: armv7-unknown-linux-gnueabihf
-                      cross-compiler: arm-linux-gnueabihf
-                      architecture: armv7
-                      deb_arch: armhf
-                      binary-postfix: "-cec7-static"
-                      LIBCEC_STATIC: "1"
-                    - os-name: linux
-                      target: aarch64-unknown-linux-gnu
-                      cross-compiler: aarch64-linux-gnu
-                      architecture: arm64
-                      deb_arch: arm64
-                      binary-postfix: "-cec7-static"
-                      LIBCEC_STATIC: "1"
-        container:
-          image: ghcr.io/cross-rs/${{ matrix.job.target }}:main
-
-        steps:
-
-            - name: Installing Rust toolchain
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: ${{ matrix.rust }}
-                  target: ${{ matrix.job.target }}
-                  profile: minimal
-                  override: true
-            - name: Checkout repository
-              uses: actions/checkout@v2
-
-            - name: Install libudev-dev for device detection support
-              run: |
-                dpkg --add-architecture ${{ matrix.job.deb_arch }}
-                apt-get update && apt-get --assume-yes install libudev-dev:${{ matrix.job.deb_arch }} \
-                || echo "Could not find libudev-udev for this architecture. Libcec device detection might be unavailable"
-
-            # We cross-compile libcec from source to target platform
-            - name: Install libcec (build using source)
-              if: ${{ matrix.job.LIBCEC_VENDORED == '0' && matrix.job.LIBCEC_STATIC == '0' && matrix.job.libcec_git_tag != '' }}
-              run: |
-                  apt-get update
-                  # dependencies for libcec build
-                  apt install -yq pkg-config udev:${{ matrix.job.deb_arch }} libp8-platform-dev:${{ matrix.job.deb_arch }}
-
-                  rm -rf /tmp/libcec-build-tmp
-                  mkdir /tmp/libcec-build-tmp
-                  git clone --recursive https://github.com/Pulse-Eight/libcec.git /tmp/libcec-build-tmp/libcec
-                  sh -c "cd /tmp/libcec-build-tmp/libcec &&  git checkout ${{ matrix.job.libcec_git_tag }}"
-                  mkdir /tmp/libcec-build-tmp/libcec/build
-                  # Cross-compile!
-                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && cmake -DCMAKE_TOOLCHAIN_FILE=/tmp/libcec-build-tmp/libcec/cmake/CrossCompile.cmake -DXCOMPILE_PREFIX=${{ matrix.job.cross-compiler }}- -DXCOMPILE_LIB_PATH=/usr/lib/${{ matrix.job.cross-compiler }}/ -DHAVE_LINUX_API=1 .."
-                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && make -j4"
-                  sh -c "cd /tmp/libcec-build-tmp/libcec/build && make install"
-                  ldconfig
-
-            - name: Cargo build
-              uses: actions-rs/cargo@v1
-              with:
-                  command: build
-                  toolchain: ${{ matrix.rust }}
-                  args: --release --target ${{ matrix.job.target }}
-              env:
-                  LIBCEC_STATIC: ${{ matrix.job.LIBCEC_STATIC || '0' }}
-                  LIBCEC_VENDORED: ${{ matrix.job.LIBCEC_VENDORED || '0' }}
-
-            - name: install strip command
-              shell: bash
-              run: |
-                  apt update
-                  if [[ ${{ matrix.job.target }} == armv7-unknown-linux-gnueabihf ]]; then
-                    BINUTILS=binutils-arm-linux-gnueabihf
-                  else
-                    BINUTILS=$(echo "binutils-${{ matrix.job.target }}"|sed s/unknown-//|tr _ -)
-                  fi
-                  apt-get install -y $BINUTILS
-
-            - name: Packaging final binary
-              shell: bash
-              run: |
-                  set -x
-                  cd target/${{ matrix.job.target }}/release
-
-                  ####### reduce binary size by removing debug symbols #######
-                  BINARY_NAME=cec-alsa-sync
-                  if [[ ${{ matrix.job.target }} == armv7-unknown-linux-gnueabihf ]]; then
-                    GCC_PREFIX=arm-linux-gnueabihf-
-                  else
-                    GCC_PREFIX=$(echo "${{ matrix.job.target }}-"|sed s/unknown-//)
-                  fi
-                  "$GCC_PREFIX"strip $BINARY_NAME
-                  if [[ "${{ matrix.job.binary-postfix }}" != "" ]]; then
-                    mv $BINARY_NAME $BINARY_NAME${{ matrix.job.binary-postfix }}
-                  fi
-
-                  ########## create tar.gz ##########
-                  REF_NAME=${GITHUB_REF#refs/*/}
-                  RELEASE_NAME=cec-alsa-sync${{ matrix.job.binary-postfix }}-$REF_NAME-${{ matrix.job.os-name }}-${{ matrix.job.architecture }}
-                  tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME${{ matrix.job.binary-postfix }}
-
-                  ########## create sha256 ##########
-                  if [[ ${{ runner.os }} == 'Windows' ]]; then
-                    certutil -hashfile $RELEASE_NAME.tar.gz sha256 | grep -E [A-Fa-f0-9]{64} > $RELEASE_NAME.sha256
-                  else
-                    shasum -a 256 $RELEASE_NAME.tar.gz > $RELEASE_NAME.sha256
-                  fi
-            - name: Releasing assets
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: |
-                      target/${{ matrix.job.target }}/release/cec-alsa-sync-*.tar.gz
-                      target/${{ matrix.job.target }}/release/cec-alsa-sync-*.sha256
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    #publish-cargo:
-    #    name: Publishing to Cargo
-    #    runs-on: ubuntu-22.04
-    #    steps:
-    #        - uses: actions/checkout@master
-    #        - name: Install dependencies to avoid vendored libcec build in libcec-sys
-    #          run: sudo apt-get install libudev-dev libcec6 libcec-dev pkg-config libp8-platform-dev
-    #        - uses: actions-rs/toolchain@v1
-    #          with:
-    #              toolchain: stable
-    #              profile: minimal
-    #              override: true
-    #        - uses: actions-rs/cargo@v1
-    #          with:
-    #              command: publish
-    #              args: --token ${{ secrets.CARGO_API_KEY }} --allow-dirty
+  publish:
+    name: Publish ${{ matrix.target }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: armv7-unknown-linux-gnueabihf
+            architecture: armv7
+          - target: aarch64-unknown-linux-gnu
+            architecture: arm64
+    container:
+      image: ghcr.io/cross-rs/${{ matrix.target }}:main
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Fetch matching libCEC 8 shared library
+        run: |
+          mkdir -p libcec
+          curl --fail --location --retry 3 \
+            --output libcec/libcec.zip \
+            "https://github.com/ssalonen/libcec-static-builds/releases/download/${LIBCEC_STATIC_RELEASE}/libcec-v${LIBCEC_VERSION}-dynamic-${{ matrix.target }}-release.zip"
+          unzip -q libcec/libcec.zip -d libcec/unpacked
+          find libcec/unpacked -type f -name libcec.so -printf 'LIBCEC_LIB_DIR=%h\n' >> "$GITHUB_ENV"
+      - name: Build release binary
+        run: |
+          RUSTFLAGS='-C link-arg=-Wl,-rpath,$ORIGIN/lib' \
+            cargo build --release --target "${{ matrix.target }}" --verbose
+      - name: Package binary and matching libCEC runtime
+        run: |
+          release_name="cec-alsa-sync-${GITHUB_REF_NAME}-linux-${{ matrix.architecture }}"
+          bundle="$release_name"
+          mkdir -p "$bundle/lib"
+          cp "target/${{ matrix.target }}/release/cec-alsa-sync" "$bundle/"
+          cp "$LIBCEC_LIB_DIR"/libcec.so* "$bundle/lib/"
+          cp LICENSE "$bundle/"
+          tar -C . -czvf "$release_name.tar.gz" "$bundle"
+          sha256sum "$release_name.tar.gz" > "$release_name.tar.gz.sha256"
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cec-alsa-sync-*.tar.gz
+            cec-alsa-sync-*.tar.gz.sha256

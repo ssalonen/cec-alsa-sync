@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 6.0.1
+
+### Changed
+
+- ci: rename the `LIBCEC_STATIC_RELEASE` workflow variable to `LIBCEC_RELEASE_TAG`; the `libcec` crate links dynamically, so the pipeline bundles a shared `libcec.so` rather than linking statically.
+
+### Fixed
+
+- cd: install the target-architecture `libudev` so libCEC linkage succeeds in the cross build.
+- cd: install an archive extractor in the cross images so the libCEC artifact unpacks.
+
 ## 6.0.0
 
 ### Breaking changes

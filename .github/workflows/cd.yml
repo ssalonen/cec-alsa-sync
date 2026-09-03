@@ -10,7 +10,9 @@ permissions:
 
 env:
   LIBCEC_VERSION: 8.1.6
-  LIBCEC_STATIC_RELEASE: libcec-v8.1.6-202608-2
+  # Tag of the prebuilt libCEC release to fetch. The libcec crate links
+  # dynamically (dylib=cec) with no static option, so this bundles libcec.so.
+  LIBCEC_RELEASE_TAG: libcec-v8.1.6-202608-2
 
 jobs:
   publish:
@@ -41,7 +43,7 @@ jobs:
           mkdir -p libcec
           curl --fail --location --retry 3 \
             --output libcec/libcec.zip \
-            "https://github.com/ssalonen/libcec-static-builds/releases/download/${LIBCEC_STATIC_RELEASE}/libcec-v${LIBCEC_VERSION}-dynamic-${{ matrix.target }}-release.zip"
+            "https://github.com/ssalonen/libcec-static-builds/releases/download/${LIBCEC_RELEASE_TAG}/libcec-v${LIBCEC_VERSION}-dynamic-${{ matrix.target }}-release.zip"
           unzip -q libcec/libcec.zip -d libcec/unpacked
           find libcec/unpacked -type f -name libcec.so -printf 'LIBCEC_LIB_DIR=%h\n' >> "$GITHUB_ENV"
       - name: Build release binary

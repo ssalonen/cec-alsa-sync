@@ -12,7 +12,9 @@ permissions:
 
 env:
   LIBCEC_VERSION: 8.1.6
-  LIBCEC_STATIC_RELEASE: libcec-v8.1.6-202608-2
+  # Tag of the prebuilt libCEC release to fetch. The libcec crate links
+  # dynamically (dylib=cec) with no static option, so this bundles libcec.so.
+  LIBCEC_RELEASE_TAG: libcec-v8.1.6-202608-2
 
 jobs:
   cross-check:
@@ -45,7 +47,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$LIBCEC_STATIC_RELEASE" \
+          gh release download "$LIBCEC_RELEASE_TAG" \
             --repo ssalonen/libcec-static-builds \
             --pattern "libcec-v${LIBCEC_VERSION}-dynamic-x86_64-unknown-linux-gnu-release.zip" \
             --dir "$RUNNER_TEMP/libcec"

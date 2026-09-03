@@ -22,8 +22,10 @@ jobs:
         include:
           - target: armv7-unknown-linux-gnueabihf
             architecture: armv7
+            deb_arch: armhf
           - target: aarch64-unknown-linux-gnu
             architecture: arm64
+            deb_arch: arm64
     container:
       image: ghcr.io/cross-rs/${{ matrix.target }}:main
     steps:
@@ -33,8 +35,9 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Fetch matching libCEC 8 shared library
         run: |
+          dpkg --add-architecture "${{ matrix.deb_arch }}"
           apt-get update
-          apt-get install --yes unzip
+          apt-get install --yes unzip "libudev-dev:${{ matrix.deb_arch }}"
           mkdir -p libcec
           curl --fail --location --retry 3 \
             --output libcec/libcec.zip \
